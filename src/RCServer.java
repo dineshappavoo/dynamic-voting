@@ -18,7 +18,7 @@ import java.util.LinkedList;
 import java.util.PriorityQueue;
 import java.util.Queue;
 import java.util.concurrent.atomic.AtomicInteger;
-public class RCServer extends RoucairolCarvalho implements Runnable{
+public class RCServer extends DynamicVoting implements Runnable{
 	public static final int MESSAGE_SIZE = 1000;
 	public static boolean hasAllTerminated = false;
 	//private HashMap<Integer, Host> nodeMap;

@@ -1,5 +1,5 @@
 #
-# Configuration file for AOS Project 2
+# Configuration file for AOS Project 3
 # 
 #
 # As per the "shell" convention, anything following a hash sign is
@@ -19,6 +19,10 @@ n   7               dc42        11088
 n   8               dc43        11099
 n   9               dc44        12000
 
-cscount 20      
-meandelay 10       
-duration 10  
+nooffiles 20
+noofoperations 1000       
+meandelay 50        
+fractionofoperations 80
+min_backoff 16
+max_backoff 128
+  

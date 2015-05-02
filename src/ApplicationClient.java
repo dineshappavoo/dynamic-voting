@@ -23,7 +23,7 @@ public class ApplicationClient implements Runnable{
 	private int noOfCriticalSectionRequests;
 	private int meanDelayInCriticalSection;
 	private int durationOfCriticalSection;
-	private RoucairolCarvalho rcObj = new RoucairolCarvalho();
+	private DynamicVoting rcObj = new DynamicVoting();
 
 	private LinkedList<Integer> series = new LinkedList<Integer>();
 	private int iterator;

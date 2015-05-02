@@ -17,7 +17,7 @@ import java.util.concurrent.atomic.AtomicInteger;
  * @author Dany
  *
  */
-public class RoucairolCarvalho {
+public class DynamicVoting {
 
 	private static int noOfNodes;
 	protected static int nodeId;
@@ -256,7 +256,7 @@ public class RoucairolCarvalho {
 		if(args.length > 0) {
 			nodeId = Integer.parseInt(args[0]);
 		}
-		RoucairolCarvalho rcObject = new RoucairolCarvalho();
+		DynamicVoting rcObject = new DynamicVoting();
 		rcObject.simulateRoucairolCarvalho();
 	}
 
