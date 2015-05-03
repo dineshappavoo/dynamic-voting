@@ -21,10 +21,13 @@ public class DynamicVoting {
 
 	private static int noOfNodes;
 	protected static int nodeId;
-	private static Random rand;//= new Random();
-	protected static int noOfCriticalSectionRequests;
-	private static int meanDelayInCriticalSection;
-	private static int durationOfCriticalSection;
+	private static int noOfFiles;
+	private static int noOfOperations;
+	private static int meanDelay;
+	private static int fractionOfOperations;
+	private static int minBackOff;
+	private static int maxBackOff;
+
 	protected static Boolean isTerminationSent = false;
 
 	protected static HashMap<Integer, Host> nodeMap;
@@ -35,66 +38,14 @@ public class DynamicVoting {
 	protected static AtomicInteger currentNodeCSEnterTimestamp = new AtomicInteger(0);
 	protected static int count = 0;
 	protected static  ApplicationClient oAppClient;
-	static RCServer rCServer = new RCServer();
+	//static RCServer rCServer = new RCServer();
 	protected PrintWriter out;
 
 	public void startServer()
 	{
-		new Thread(rCServer).start();
-		oAppClient = new ApplicationClient(noOfCriticalSectionRequests, meanDelayInCriticalSection, durationOfCriticalSection);
-		new Thread(oAppClient).start();
-	}
-
-	public void cs_enter()
-	{
-		try
-		{
-			//Create log file
-			String fileName = "node"+nodeId+".log";
-			out = new PrintWriter(new BufferedWriter(new FileWriter(fileName, true)));
-		}
-		catch(IOException ex)
-		{
-			out.close();
-			ex.printStackTrace();	
-		}
-		//out.println("[INFO]	["+sTime()+"]	Node Id "+nodeId+"  Request arrived for Entering into Critical Section");
-		requestForCriticalSection = true;
-		currentNodeCSEnterTimestamp.incrementAndGet();
-		rCServer.requestAllKeys();
-		while(!rCServer.isAllNodeKeysKnown())
-		{
-			try {
-				Thread.sleep(2000);
-			}catch(InterruptedException ex)
-			{
-				ex.printStackTrace();
-			}
-		}
-		isInCriticalSection = true;
-		displayCSMessage(nodeId);
-		out.println(System.currentTimeMillis()+":"+nodeId+"-Start");
-		return;
-	}
-
-	public void cs_leave()
-	{
-		//out.println("[INFO]	["+sTime()+"]	Node Id "+nodeId+"  Request arrived to leave from Critical Section");
-		//make the isInCriticalSection boolean as false
-		out.println(System.currentTimeMillis()+":"+nodeId+"-End");
-		out.flush();
-		out.close();
-		isInCriticalSection = false;
-		requestForCriticalSection = false;
-		rCServer.startRCClients(minHeap, MessageType.RESPONSE_KEY);
-		minHeap = getPriorityQueue();
-		//out.println("[INFO]	["+sTime()+"]	Node Id "+nodeId+"  left Critical Section");
-		count++;
-		//out.println("[INFO]	["+sTime()+"]	Count Value - "+count+"   Total CS Requests = "+noOfCriticalSectionRequests);
-		if(count == noOfCriticalSectionRequests ){
-			rCServer.sendTermination();
-		}
-		return;
+		//new Thread(rCServer).start();
+		//oAppClient = new ApplicationClient(noOfCriticalSectionRequests, meanDelayInCriticalSection, durationOfCriticalSection);
+		//new Thread(oAppClient).start();
 	}
 
 	public void displayCSMessage(int nodeId)
@@ -138,19 +89,12 @@ public class DynamicVoting {
 	public HashMap<Integer, Host> constructGraph(String fileName, int nodeId) throws FileNotFoundException
 	{
 		nodeMap = new HashMap<Integer, Host>();
-		rand = new Random();
 		File file = new File(fileName);
 		Scanner scanner=new Scanner(file);
 		int hostId, hostPort;
 		String hostName="";
 		String checker="";
 
-		//To Generate random numbers between a range from 0 to 9
-		int start = randInt(0, 9);
-		int end = randInt(0, 9);		
-		int startNode = start<=end?start:end;
-		int endNode = start>end?start:end;
-		//System.out.println("Start : "+startNode+" End : "+endNode);
 
 		//Read input from config file
 		while(scanner.hasNext())
@@ -168,59 +112,38 @@ public class DynamicVoting {
 
 						if(nodeMap.get(hostId)==null)// || hostId != nodeId)
 						{
-							if(hostId<=endNode && hostId >=startNode)
-							{
-								nodeMap.put(hostId, new Host(hostId, hostName, hostPort, false, false));
-							}else
-							{
-								nodeMap.put(hostId, new Host(hostId, hostName, hostPort, false, false));
-							}
+							nodeMap.put(hostId, new Host(hostId, hostName, hostPort, false, false));
 						}
 					}
 				}
-
-				if((checker=scanner.next()).equals("cscount") && (!(checker.equals("#"))))
-				{
-					noOfCriticalSectionRequests = scanner.nextInt();
-				}
-
-				if((checker=scanner.next()).equals("meandelay") && (!(checker.equals("#"))))
-				{
-					meanDelayInCriticalSection = scanner.nextInt();
-				}
-
-				if((checker=scanner.next()).equals("duration") && (!(checker.equals("#"))))
-				{
-					durationOfCriticalSection = scanner.nextInt();
-				}
 			}
+
+			checker=scanner.next();
+			if(checker.equals("nooffiles") && (!(checker.equals("#"))))
+			{
+				noOfFiles = scanner.nextInt();
+			}else if(checker.equals("noofoperations") && (!(checker.equals("#"))))
+			{
+				noOfOperations = scanner.nextInt();
+			}else if(checker.equals("meandelay") && (!(checker.equals("#"))))
+			{
+				meanDelay = scanner.nextInt();
+			}else if(checker.equals("fractionofoperations") && (!(checker.equals("#"))))
+			{
+				fractionOfOperations = scanner.nextInt();
+			}else if(checker.equals("min_backoff") && (!(checker.equals("#"))))
+			{
+				minBackOff = scanner.nextInt();
+			}else if(checker.equals("max_backoff") && (!(checker.equals("#"))))
+			{
+				maxBackOff = scanner.nextInt();
+			}
+
 		}
-		//printNodeMap();
+		printNodeMap();
 		return nodeMap;	
 	}
 
-	//For Testing - Not used
-	public void getRange()
-	{
-		int start = randInt(0, 9);
-		int end = randInt(0, 9);		
-		int startNode = start<=end?start:end;
-		int endNode = start>end?start:end;
-		System.out.println("Start : "+startNode+" End : "+endNode);
-	}
-
-	public static int randInt(int min, int max) {
-
-		// NOTE: Usually this should be a field rather than a method
-		// variable so that it is not re-seeded every call.
-		rand = new Random();
-
-		// nextInt is normally exclusive of the top value,
-		// so add 1 to make it inclusive
-		int randomNum = rand.nextInt((max - min) + 1) + min;
-
-		return randomNum;
-	}
 
 	public String sTime()
 	{
@@ -238,13 +161,13 @@ public class DynamicVoting {
 		}
 	}
 
-	public void simulateRoucairolCarvalho() throws FileNotFoundException
+	public void simulateDynamicVoting() throws FileNotFoundException
 	{
-		//HashMap<Integer, Host> nMap = constructGraph("/Users/Dany/Documents/FALL-2013-COURSES/Imp_Data_structures/workspace/roucairol-carvalho/src/config.txt", nodeId);
-		HashMap<Integer, Host> nMap = constructGraph("config.txt", nodeId);
+		HashMap<Integer, Host> nMap = constructGraph("/Users/Dany/Documents/FALL-2013-COURSES/Imp_Data_structures/workspace/roucairol-carvalho/src/config.txt", nodeId);
+		//HashMap<Integer, Host> nMap = constructGraph("config.txt", nodeId);
 
 		//System.out.println("[INFO]	["+sTime()+"]	No Of CS : "+noOfCriticalSectionRequests+"  Mean Delay : "+meanDelayInCriticalSection+"  Duration Of CS : "+durationOfCriticalSection);
-		startServer();
+		//startServer();
 	}
 
 	/**
@@ -253,11 +176,13 @@ public class DynamicVoting {
 	 */
 	public static void main(String[] args) throws FileNotFoundException {
 		// TODO Auto-generated method stub
-		if(args.length > 0) {
+
+		/*if(args.length > 0) {
 			nodeId = Integer.parseInt(args[0]);
 		}
-		DynamicVoting rcObject = new DynamicVoting();
-		rcObject.simulateRoucairolCarvalho();
+		 */
+		DynamicVoting dvObject = new DynamicVoting();
+		dvObject.simulateDynamicVoting();
 	}
 
 }
