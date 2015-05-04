@@ -11,16 +11,21 @@ import java.util.concurrent.atomic.AtomicInteger;
  *
  */
 enum MessageType {
-	REQUEST_KEY,RESPONSE_KEY,RESPONSE_AND_REQUEST_KEY,TERMINATION_MESSAGE;
+	READ_REQUEST,READ_RESPONSE,WRITE_REQUEST, WRITE_RESPONSE,TERMINATION_MESSAGE;
+}
+enum MessageStatus {
+	ACCEPT, DENY;
 }
 public class Message implements Serializable{
 	AtomicInteger timeStamp;
 	MessageType messageType;
+	MessageStatus messageStatus;
 	Host nodeInfo;
-	public Message(AtomicInteger timeStamp, MessageType messageType, Host nodeInfo)
+	public Message(AtomicInteger timeStamp, MessageType messageType, MessageStatus messageStatus, Host nodeInfo)
 	{
 		this.timeStamp = timeStamp;
 		this.messageType = messageType;
+		this.messageStatus = messageStatus;
 		this.nodeInfo = nodeInfo;
 	}
 }
