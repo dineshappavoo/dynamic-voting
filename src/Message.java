@@ -33,6 +33,9 @@ public class Message implements Serializable{
 		this.status =status;
 		this.nodeInfo = nodeInfo;
 	}
+	public Message() {
+		// TODO Auto-generated constructor stub
+	}
 	public AtomicInteger getLogicalTimeStamp() {
 		return logicalTimeStamp;
 	}

@@ -75,7 +75,7 @@ public class RCServer extends DynamicVoting implements Runnable{
 			    	//IF GRANTED
 			    	
 			    	//ELSE
-			    	grantLock(messageObj.getSourceNode().getHostId(), Boolean.TRUE);
+			    	grantLock(messageObj.getNodeInfo().getHostId(), Boolean.TRUE);
 			    		
 			    }
 			    else if(messageObj.messageType.equals(MessageType.REQUEST_WRITE_LOCK))
@@ -85,7 +85,7 @@ public class RCServer extends DynamicVoting implements Runnable{
 			    	//IF GRANTED
 			    	
 			    	//ELSE
-			    	grantLock(messageObj.getSourceNode().getHostId(), Boolean.FALSE);
+			    	grantLock(messageObj.getNodeInfo().getHostId(), Boolean.FALSE);
 			    }
 			    else if(messageObj.messageType.equals(MessageType.RESPONSE_READ))
 			    {
@@ -141,7 +141,7 @@ public class RCServer extends DynamicVoting implements Runnable{
 		}
 	}
 
-	
+	//TO BE MOVED TO SERVICE CLASS
 	public void grantLock(int node_id, Boolean isReadLock)
 	{
 		if(isReadLock)	
@@ -172,8 +172,7 @@ public class RCServer extends DynamicVoting implements Runnable{
 			// Increment vector timestamp
 			
 			Message msgObj = new Message();
-			msgObj.setClientNode(destination);
-			msgObj.setSourceNode(source);
+			msgObj.setNodeInfo(source);
 			if(isReadLock)
 			{
 				msgObj.setMessageType(MessageType.RESPONSE_READ);
