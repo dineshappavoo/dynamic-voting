@@ -7,6 +7,7 @@ import java.io.*;
 import java.net.*;
 
 import com.sun.nio.sctp.*;
+import com.sun.xml.internal.ws.api.message.Packet;
 
 import java.nio.*;
 import java.text.SimpleDateFormat;
@@ -48,11 +49,11 @@ public class RCServer extends DynamicVoting implements Runnable{
 			InetSocketAddress serverAddr = new InetSocketAddress(port);
 			//Bind the channel's socket to the server in the current machine at port 5000
 			sctpServerChannel.bind(serverAddr);
-			
+
 
 			System.out.println("[INFO]	["+sTime()+"]	Node Id "+nodeId+"  SERVER STARTED");
 			System.out.println("[INFO]	["+sTime()+"]	==================================");
-			
+
 			Thread.sleep(7000);
 			minHeap = getPriorityQueue();
 			//preEmptQueue = new ArrayList<Host>();
@@ -60,147 +61,72 @@ public class RCServer extends DynamicVoting implements Runnable{
 			//Server goes into a permanent loop accepting connections from clients			
 			while(true)
 			{
-
-				if(hasAllTerminated){
-					if(!isTerminationSent)
-					{
-						if(count == noOfCriticalSectionRequests){
-							while(isInCriticalSection);
-							//System.out.println("Count Value - "+count+"   Total CS Requests = "+noOfCriticalSectionRequests);
-
-							rCServer.sendTermination();
-						}
-					}
-					else
-					{
-						//System.out.println("Terminating Server at node "+nodeId);
-						System.exit(0);
-					}
-
-				}
-				//Listen for a connection to be made to this socket and accept it
-				//The method blocks until a connection is made
-				//Returns a new SCTPChannel between the server and client
 				SctpChannel sctpChannel = sctpServerChannel.accept();
-				//Receive message in the channel (byte format) and store it in buf
-				//Note: Actual message is in byte format stored in buf
-
-				//Receive Message from client
+				MessageInfo messageInfo = sctpChannel.receive(byteBuffer,null,null);
 				byteBuffer.clear();
-				MessageInfo messageInfo = sctpChannel.receive(byteBuffer, null, null);
-				ByteArrayInputStream bin = new ByteArrayInputStream(byteBuffer.array());
-				ObjectInputStream oin = new ObjectInputStream(bin);
-				Message messageObj = (Message) oin.readObject();	
-				int hostId;
-
-				if(messageObj.messageType  == MessageType.REQUEST_KEY)
-				{
-					System.out.println("[INFO]	["+sTime()+"]	["+messageObj.messageType+"]	Node ID : "+nodeId+"	CurrentNode Timestamp : "+currentNodeCSEnterTimestamp.get()+"	Message Timestamp : "+messageObj.timeStamp+"	Got Request from Node Id "+messageObj.nodeInfo.hostId);
-
-					if(isInCriticalSection)
-					{
-						minHeap.add(messageObj);
-
-					}else if(requestForCriticalSection)
-					{
-						if(messageObj.timeStamp.get()>=currentNodeCSEnterTimestamp.get())
-						{
-							if(messageObj.timeStamp.get()==currentNodeCSEnterTimestamp.get())
-							{
-								if(nodeId<messageObj.nodeInfo.hostId)
-								{
-									minHeap.add(messageObj);
-								}else
-								{
-									hostId = messageObj.nodeInfo.hostId;
-									nodeMap.get(hostId).keyKnown = false;
-									//currentNodeCSEnterTimestamp.incrementAndGet(); //Timestamp is getting incremented since it is RESPONSE_AND_REQUEST_KEY
-									startRCClient(messageObj.nodeInfo, MessageType.RESPONSE_AND_REQUEST_KEY);   //Response_and_request key in case there is a CS request pending
-								}
-							}else
-							{
-								minHeap.add(messageObj);
-							}
-						}						
-						else
-						{
-							hostId = messageObj.nodeInfo.hostId;
-							nodeMap.get(hostId).keyKnown = false;
-							//currentNodeCSEnterTimestamp.incrementAndGet(); //Timestamp is getting incremented since it is RESPONSE_AND_REQUEST_KEY
-							startRCClient(messageObj.nodeInfo, MessageType.RESPONSE_AND_REQUEST_KEY);   //Response_and_request key in case there is a CS request pending
-						}
-					}				
-					else
-					{
-						//preEmptQueue.add(messageObj.nodeInfo);
-						hostId = messageObj.nodeInfo.hostId;
-						nodeMap.get(hostId).keyKnown = false;
-						//nodeMap.get(hostId).isRequested = false;  //-Dont think this is required
-						startRCClient(messageObj.nodeInfo, MessageType.RESPONSE_KEY);   //Response_and_request key in case there is a CS request pending
-					}
-				}else if(messageObj.messageType  == MessageType.RESPONSE_KEY)
-				{
-					//out.println("[INFO]	["+sTime()+"]	["+messageObj.messageType+"]	Node ID : "+nodeId+"	CurrentNode Timestamp : "+currentNodeCSEnterTimestamp.get()+"	Message Timestamp : "+messageObj.timeStamp+"	Got Response from Node Id "+messageObj.nodeInfo.hostId);
-
-					hostId = messageObj.nodeInfo.hostId;
-					nodeMap.get(hostId).keyKnown = true;
-					nodeMap.get(hostId).isRequested = false;
-
-					if(!isAllNodeKeysKnown())
-					{
-						;
-					}
-
-				}else if(messageObj.messageType == MessageType.RESPONSE_AND_REQUEST_KEY)
-				{
-					System.out.println("[INFO]	["+sTime()+"]	["+messageObj.messageType+"]	Node ID : "+nodeId+"	CurrentNode Timestamp : "+currentNodeCSEnterTimestamp.get()+"	Message Timestamp : "+messageObj.timeStamp+"	Got Response and Request from Node Id "+messageObj.nodeInfo.hostId);
-
-					//This case we don't have to compare the timestamp because the other node is sending 'RESPONSE_AND_REQUEST_KEY' which means the timestamp of other node is greater than the current
-					minHeap.add(messageObj);
-					hostId = messageObj.nodeInfo.hostId;
-					nodeMap.get(hostId).keyKnown = true;
-					nodeMap.get(hostId).isRequested = false;
-
-
-				}else if(messageObj.messageType == MessageType.TERMINATION_MESSAGE)
-				{
-
-					System.out.println("[INFO]	["+sTime()+"]	["+messageObj.messageType+"]	Node ID : "+nodeId+"	CurrentNode Timestamp : "+currentNodeCSEnterTimestamp.get()+"	Message Timestamp : "+messageObj.timeStamp+"	Got Termination message from Node Id "+messageObj.nodeInfo.hostId);
-					hostId = messageObj.nodeInfo.hostId;
-					nodeMap.get(hostId).isTerminated = true;
-
-					hasAllTerminated = true;
-					for(int i : nodeMap.keySet()){
-						//System.out.println("[INFO]	["+sTime()+"]	Termination Check  :: Node: "+nodeMap.get(i).hostName);
-						if(!nodeMap.get(i).isTerminated){
-							hasAllTerminated = false;
-							//break;
-						}
-					}
-
-
-					if(hasAllTerminated)
-					{
-						if(!isTerminationSent)
-						{
-							if(count == noOfCriticalSectionRequests){
-								while(isInCriticalSection);
-								//out.println("[INFO]	["+sTime()+"]	Count Value - "+count+"   Total CS Requests = "+noOfCriticalSectionRequests);
-
-								rCServer.sendTermination();
-							}
-						}
-						else
-						{
-							System.out.println("[INFO]	["+sTime()+"]	Terminating Server at node "+nodeId);
-							System.exit(0);
-						}
-
-					}
-
-
-				}
-				Thread.sleep(1000);
+				ByteArrayInputStream in = new ByteArrayInputStream(byteBuffer.array());
+			    ObjectInputStream os = new ObjectInputStream(in);
+			    Message messageObj = (Message) os.readObject();
+			    
+			    if(messageObj.messageType.equals(MessageType.REQUEST_READ_LOCK))
+			    {
+			    	//TODO For Request Read lock
+			    	//Check if write lock is granted
+			    	//IF GRANTED
+			    	
+			    	//ELSE
+			    	grantLock(messageObj.getSourceNode().getHostId(), Boolean.TRUE);
+			    		
+			    }
+			    else if(messageObj.messageType.equals(MessageType.REQUEST_WRITE_LOCK))
+			    {
+			    	//TODO for Request Write lock
+			    	//Check if write lock is not already granted AND read lock is also not granted
+			    	//IF GRANTED
+			    	
+			    	//ELSE
+			    	grantLock(messageObj.getSourceNode().getHostId(), Boolean.FALSE);
+			    }
+			    else if(messageObj.messageType.equals(MessageType.RESPONSE_READ))
+			    {
+			    	if(messageObj.status.equals(Status.GRANT))
+			    	{
+			    		//TODO for READ GRANT
+			    	}
+			    	else if(messageObj.status.equals(Status.DENY))
+			    	{
+			    		//TODO for READ DENY
+			    	}
+			    }
+			    else if(messageObj.messageType.equals(MessageType.RESPONSE_WRITE))
+			    {
+			    	if(messageObj.status.equals(Status.GRANT))
+			    	{
+			    		//TODO for WRITE GRANT
+			    	}
+			    	else if(messageObj.status.equals(Status.DENY))
+			    	{
+			    		//TODO for WRITE DENY
+			    	}
+			    }
+			    else if(messageObj.messageType.equals(MessageType.RELEASE_READ_LOCK))
+			    {
+			    	//Update the read lock granted map
+			    		
+			    }
+			    else if(messageObj.messageType.equals(MessageType.RELEASE_WRITE_LOCK))
+			    {
+			    	//Update the write lock granted map
+			    }
+			    else if(messageObj.messageType.equals(MessageType.REQUEST_LATEST_FILE_READ))
+			    {
+			    	//Update the read lock granted map
+			    		
+			    }
+			    else if(messageObj.messageType.equals(MessageType.REQUEST_LATEST_FILE_WRITE))
+			    {
+			    	//Update the write lock granted map
+			    }
 			}
 		}
 		catch(IOException ex)
@@ -215,6 +141,69 @@ public class RCServer extends DynamicVoting implements Runnable{
 		}
 	}
 
+	
+	public void grantLock(int node_id, Boolean isReadLock)
+	{
+		if(isReadLock)	
+		{
+			//Set Grant read lock hashmap
+		}
+		else 
+		{
+			//Set Grant Write lock hashmap
+		}
+			
+			//Send Grant READ MESSAGE
+			//Set Host data
+			Host source = new Host();
+			source.setHostId(0); //TODO: SET WITH THE CURRENT NODEID
+			source.setHostName("hostName");//TODO: SET WITH HOSTNAME
+			source.setHostPort(0);//TODO: SET WITH HOST PORT
+			
+			Host destination = new Host();
+			destination.setHostId(nodeId);
+			Host node = nodeMap.get(nodeId);
+			destination.setHostPort(node.getHostPort());
+			destination.setHostName(node.getHostName());
+			
+			
+			// Increment logical timestamp
+			
+			// Increment vector timestamp
+			
+			Message msgObj = new Message();
+			msgObj.setClientNode(destination);
+			msgObj.setSourceNode(source);
+			if(isReadLock)
+			{
+				msgObj.setMessageType(MessageType.RESPONSE_READ);
+			}
+			else 
+			{
+				msgObj.setMessageType(MessageType.RESPONSE_WRITE);
+			}
+			msgObj.setStatus(Status.GRANT);
+			//TODO: SET TIMESTAMPS - LOGICAL AND VECTOR
+			
+			//Client for sending message
+			RCClient rcClient = new RCClient(destination, msgObj);
+			rcClient.go();
+		//}
+		
+	}
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
 
 	public synchronized void requestAllKeys()
 	{
@@ -341,7 +330,7 @@ public class RCServer extends DynamicVoting implements Runnable{
 			{
 				return;
 			}
-			
+
 			if(sMessageType == MessageType.REQUEST_KEY)
 			{
 				nodeMap.get(host.hostId).isRequested = true;
@@ -382,7 +371,7 @@ public class RCServer extends DynamicVoting implements Runnable{
 			Message m = minHeap.poll();
 			if(m!=null)
 			{
-				Host host = m.nodeInfo;
+				Host host = m.sourceNode;
 				//out.println("[INFO]	["+sTime()+"]	WAITING-LIST	Node Name : "+host.hostName);
 				if (nodeId!=host.hostId)
 				{
