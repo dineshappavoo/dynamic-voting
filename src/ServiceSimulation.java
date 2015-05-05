@@ -9,6 +9,8 @@ import java.io.PrintWriter;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.nio.file.Path;
+import java.util.HashMap;
+import java.util.Map.Entry;
 /**
  * @author Dany
  *
@@ -39,7 +41,7 @@ public class ServiceSimulation {
 		return data;
 	}
 	
-	public void pushDataFromMemoryToFile(String fileName, byte[] data) throws Exception
+	public void pushDataFromMemoryToFile(String fileName, byte[] data)
 	{
 		try
 		{
@@ -76,7 +78,109 @@ public class ServiceSimulation {
 		}
 	}
 	
-	
-	
+	public void grantLock(int node_id, Boolean isReadLock, String file_id)
+	{
+		FileInfo fileInfo;
+		if(isReadLock)	
+		{
+			synchronized(DynamicVoting.readLockGranted)
+			{
+				DynamicVoting.readLockGranted.get(node_id).get(file_id).setLock(true);
+				fileInfo = DynamicVoting.readLockGranted.get(node_id).get(file_id);  
+			}
+		}
+		else 
+		{
+			synchronized(DynamicVoting.writeLockGranted)
+			{
+				DynamicVoting.writeLockGranted.get(node_id).get(file_id).setLock(true);
+				fileInfo = DynamicVoting.writeLockGranted.get(node_id).get(file_id);
+			}
+		}
 
+		//Send Grant READ MESSAGE
+		//Set Host data
+		Host source = new Host(DynamicVoting.nodeId,DynamicVoting.nodeName,DynamicVoting.nodePort);
+
+		Host destination = new Host(node_id,DynamicVoting.nodeMap.get(node_id).getHostName(),DynamicVoting.nodeMap.get(node_id).getHostPort());
+
+		// Increment logical timestamp
+
+		// Increment vector timestamp
+
+		Message msgObj = new Message();
+		msgObj.setNodeInfo(source);
+		msgObj.setFileInfo(fileInfo);
+		if(isReadLock)
+		{
+			msgObj.setMessageType(MessageType.RESPONSE_READ);
+		}
+		else 
+		{
+			msgObj.setMessageType(MessageType.RESPONSE_WRITE);
+		}
+		msgObj.setStatus(Status.GRANT);
+		//TODO: SET TIMESTAMPS - LOGICAL AND VECTOR
+
+		//Client for sending message
+		RCClient rcClient = new RCClient(destination, msgObj);
+		rcClient.go();
+		//}
+
+	}
+
+	
+	public void releaseLock(Boolean isRead, String fileId)
+	{
+		if(isRead)
+		{
+			synchronized(DynamicVoting.readLockReceived)
+			{
+				for(Entry<Integer,HashMap<String, FileInfo>> nodeEntry : DynamicVoting.readLockReceived.entrySet())
+				{
+					if(nodeEntry.getValue().get(fileId) != null && nodeEntry.getValue().get(fileId).isLock())
+					{
+						Host destination = DynamicVoting.nodeMap.get(nodeEntry.getKey());
+						 
+						//TODO: Update timestamps
+						Message msgObj = new Message(null,null,MessageType.RELEASE_READ_LOCK, null,DynamicVoting.nodeMap.get(DynamicVoting.nodeId),
+								nodeEntry.getValue().get(fileId), null);
+						RCClient rcClient = new RCClient(destination, msgObj);
+						rcClient.go();
+						
+						nodeEntry.getValue().get(fileId).setLock(false);
+					}
+				}
+			}
+		}
+		else
+		{
+			synchronized(DynamicVoting.writeLockReceived)
+			{
+				for(Entry<Integer,HashMap<String, FileInfo>> nodeEntry : DynamicVoting.writeLockReceived.entrySet())
+				{
+					if(nodeEntry.getValue().get(fileId) != null && nodeEntry.getValue().get(fileId).isLock())
+					{
+						Host destination = DynamicVoting.nodeMap.get(nodeEntry.getKey());
+						 
+						//TODO: Update timestamps and set in Message
+						Message msgObj = new Message(null,null,MessageType.RELEASE_WRITE_LOCK, null,DynamicVoting.nodeMap.get(DynamicVoting.nodeId),
+								nodeEntry.getValue().get(fileId), null);
+						RCClient rcClient = new RCClient(destination, msgObj);
+						rcClient.go();
+						nodeEntry.getValue().get(fileId).setLock(false);
+					}
+				}
+			}
+		
+		}
+	}
+		
+		
+/////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////
+
+	//WORKING ON REST OF THE METHODS
+	
 }

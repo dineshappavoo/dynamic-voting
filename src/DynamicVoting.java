@@ -22,6 +22,10 @@ public class DynamicVoting {
 
 	public static int noOfNodes;
 	public static int nodeId;
+	public static String nodeName;
+	public static int nodePort;
+	public static boolean isReading;
+	public static Boolean isWriting;
 	public static int noOfFiles;
 	public static int noOfOperations;
 	public static int meanDelay;
@@ -43,7 +47,7 @@ public class DynamicVoting {
 	public static PriorityQueue<Message> minHeap = getPriorityQueue();
 	public static AtomicInteger currentNodeTimestamp = new AtomicInteger(0);
 	public static int count = 0;
-	public static  ApplicationClient oAppClient;	
+	public static Boolean timerOff;
 	//public static RCServer rCServer = new RCServer();
 	public PrintWriter out;
 
@@ -117,7 +121,7 @@ public class DynamicVoting {
 
 						if(nodeMap.get(hostId)==null)// || hostId != nodeId)
 						{
-							nodeMap.put(hostId, new Host(hostId, hostName, hostPort, false, false));
+							nodeMap.put(hostId, new Host(hostId, hostName, hostPort));
 						}
 					}
 				}
