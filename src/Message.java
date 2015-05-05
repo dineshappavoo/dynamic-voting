@@ -25,13 +25,15 @@ public class Message implements Serializable{
 	MessageType messageType;
 	Status status;
 	Host nodeInfo;
-	public Message(AtomicInteger timeStamp,	AtomicInteger[] vectorTimestamp, MessageType messageType, Status status, Host nodeInfo)
+	byte[] fileContent;
+	public Message(AtomicInteger timeStamp,	AtomicInteger[] vectorTimestamp, MessageType messageType, Status status, Host nodeInfo, byte[] fileContent)
 	{
 		this.logicalTimeStamp = timeStamp;
 		this.vectorTimestamp = vectorTimestamp;
 		this.messageType = messageType;
 		this.status =status;
 		this.nodeInfo = nodeInfo;
+		this.fileContent = fileContent;
 	}
 	public Message() {
 		// TODO Auto-generated constructor stub
@@ -65,5 +67,11 @@ public class Message implements Serializable{
 	}
 	public void setNodeInfo(Host nodeInfo) {
 		this.nodeInfo = nodeInfo;
+	}
+	public byte[] getFileContent() {
+		return fileContent;
+	}
+	public void setFileContent(byte[] fileContent) {
+		this.fileContent = fileContent;
 	}
 }

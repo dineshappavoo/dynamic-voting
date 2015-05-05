@@ -6,7 +6,7 @@ netid=dxa132330
 
 #
 # Root directory of your project
-PROJDIR=$HOME/advanced-operating-system/projects/roucairol-carvalho
+PROJDIR=$HOME/advanced-operating-system/projects/dynamic-voting
 #PROJDIR=$HOME/Documents/FALL-2013-COURSES/Imp_Data_structures/workspace/node-discovery/src
 
 #
@@ -44,7 +44,7 @@ cat $CONFIG | sed -e "s/#.*//" | sed -e "/^\s*$/d" | grep "n" |
 
         #ssh $val java $PROJDIR NodeDiscovery $nodeId &
 
-        ssh -q -o StrictHostKeyChecking=no -l "$netid" "$machine" "cd $PROJDIR;java RoucairolCarvalho $nodeId" &
+        ssh -q -o StrictHostKeyChecking=no -l "$netid" "$machine" "cd $PROJDIR;java DynamicVoting $nodeId" &
 
         #cmd="ssh $val java $PROJDIR NodeDiscovery $nodeId &"
         #echo $cmd

@@ -19,8 +19,8 @@ n   7               dc42        11088
 n   8               dc43        11099
 n   9               dc44        12000
 
-nooffiles 20
-noofoperations 1000       
+totalnooffiles 20
+totalnoofoperations 1000       
 meandelay 50        
 fractionofoperations 80
 min_backoff 16

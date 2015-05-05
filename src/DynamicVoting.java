@@ -44,7 +44,7 @@ public class DynamicVoting {
 	public static AtomicInteger currentNodeTimestamp = new AtomicInteger(0);
 	public static int count = 0;
 	public static  ApplicationClient oAppClient;	
-	public static RCServer rCServer = new RCServer();
+	//public static RCServer rCServer = new RCServer();
 	public PrintWriter out;
 
 	public void startServer()
@@ -124,10 +124,10 @@ public class DynamicVoting {
 			}
 
 			checker=scanner.next();
-			if(checker.equals("nooffiles") && (!(checker.equals("#"))))
+			if(checker.equals("totalnooffiles") && (!(checker.equals("#"))))
 			{
 				noOfFiles = scanner.nextInt();
-			}else if(checker.equals("noofoperations") && (!(checker.equals("#"))))
+			}else if(checker.equals("totalnoofoperations") && (!(checker.equals("#"))))
 			{
 				noOfOperations = scanner.nextInt();
 			}else if(checker.equals("meandelay") && (!(checker.equals("#"))))
@@ -162,7 +162,7 @@ public class DynamicVoting {
 		for(int nodeId : nodeMap.keySet())
 		{
 			host = nodeMap.get(nodeId);
-			System.out.println("[INFO]	["+sTime()+"]	Host Id "+nodeId+"  Name : "+host.hostName+"  port : "+host.hostPort+"  Key Known?  "+host.keyKnown);
+			System.out.println("[INFO]	["+sTime()+"]	Host Id "+nodeId+"  Name : "+host.hostName+"  port : "+host.hostPort);
 		}
 	}
 
