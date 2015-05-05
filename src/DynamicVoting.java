@@ -11,6 +11,7 @@ import java.util.HashMap;
 import java.util.PriorityQueue;
 import java.util.Random;
 import java.util.Scanner;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
@@ -19,27 +20,32 @@ import java.util.concurrent.atomic.AtomicInteger;
  */
 public class DynamicVoting {
 
-	private static int noOfNodes;
-	protected static int nodeId;
-	private static int noOfFiles;
-	private static int noOfOperations;
-	private static int meanDelay;
-	private static int fractionOfOperations;
-	private static int minBackOff;
-	private static int maxBackOff;
+	public static int noOfNodes;
+	public static int nodeId;
+	public static int noOfFiles;
+	public static int noOfOperations;
+	public static int meanDelay;
+	public static int fractionOfOperations;
+	public static int minBackOff;
+	public static int maxBackOff;
+	
+	public static ConcurrentHashMap<Integer, HashMap<String, FileInfo>> readLockReceived = new ConcurrentHashMap<Integer, HashMap<String, FileInfo>>();
+	public static ConcurrentHashMap<Integer, HashMap<String, FileInfo>> readLockGranted = new ConcurrentHashMap<Integer, HashMap<String, FileInfo>>();
+	public static ConcurrentHashMap<Integer, HashMap<String, FileInfo>> writeLockReceived = new ConcurrentHashMap<Integer, HashMap<String, FileInfo>>();
+	public static ConcurrentHashMap<Integer, HashMap<String, FileInfo>> writeLockGranted = new ConcurrentHashMap<Integer, HashMap<String, FileInfo>>();
+	public static ConcurrentHashMap<Integer, HashMap<String, FileInfo>> ReadLockReceived = new ConcurrentHashMap<Integer, HashMap<String, FileInfo>>();
 
-	protected static Boolean isTerminationSent = false;
 
-	protected static HashMap<Integer, Host> nodeMap;
-	protected static int nWaitingForTerminationResponseCount=0;
-	protected static boolean isInCriticalSection = false;
-	protected static boolean requestForCriticalSection = false;
-	protected static PriorityQueue<Message> minHeap = getPriorityQueue();
-	protected static AtomicInteger currentNodeCSEnterTimestamp = new AtomicInteger(0);
-	protected static int count = 0;
-	protected static  ApplicationClient oAppClient;
-	//static RCServer rCServer = new RCServer();
-	protected PrintWriter out;
+	public static Boolean isTerminationSent = false;
+	public static HashMap<Integer, Host> nodeMap;
+	public static int nWaitingForTerminationResponseCount=0;
+	public static boolean isWaitingForLock = false;
+	public static PriorityQueue<Message> minHeap = getPriorityQueue();
+	public static AtomicInteger currentNodeTimestamp = new AtomicInteger(0);
+	public static int count = 0;
+	public static  ApplicationClient oAppClient;	
+	public static RCServer rCServer = new RCServer();
+	public PrintWriter out;
 
 	public void startServer()
 	{
@@ -73,8 +79,8 @@ public class DynamicVoting {
 				{
 			public int compare(Message o1, Message o2)
 			{
-				AtomicInteger t1 = o1.timeStamp;
-				AtomicInteger t2 = o2.timeStamp;
+				AtomicInteger t1 = o1.logicalTimeStamp;
+				AtomicInteger t2 = o2.logicalTimeStamp;
 				if(t1.get()>=t2.get())
 					return 1;
 				else
@@ -94,7 +100,6 @@ public class DynamicVoting {
 		int hostId, hostPort;
 		String hostName="";
 		String checker="";
-
 
 		//Read input from config file
 		while(scanner.hasNext())
