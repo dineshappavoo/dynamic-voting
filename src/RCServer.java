@@ -73,7 +73,7 @@ public class RCServer extends DynamicVoting implements Runnable{
 				{
 					//TODO For Request Read lock
 					//Check if write lock is granted
-					if(!checkLock(false,fileId) && !isWriting)
+					if(!service.checkLock(false,fileId) && !isWriting)
 					{
 						service.grantLock(hostId, Boolean.TRUE, fileId); //CALL FROM SERVICE CLASS
 					}
@@ -83,8 +83,8 @@ public class RCServer extends DynamicVoting implements Runnable{
 				{
 					//TODO for Request Write lock
 					//Check if write lock is not already granted AND read lock is also not granted
-					if(!checkLock(false, fileId) &&
-							!checkLock(true, fileId) && !isWriting)
+					if(!service.checkLock(false, fileId) &&
+							!service.checkLock(true, fileId) && !isWriting)
 					{
 						service.grantLock(hostId, Boolean.FALSE, fileId);
 					}
@@ -96,7 +96,7 @@ public class RCServer extends DynamicVoting implements Runnable{
 						//TODO for READ GRANT
 						if(timerOff)
 						{
-							//Call Read deny lock function from service
+							service.sendDenyLockMessage(hostId, Boolean.TRUE, fileId);
 						}
 						else
 						{
@@ -125,7 +125,7 @@ public class RCServer extends DynamicVoting implements Runnable{
 					{
 						if(timerOff)
 						{
-							//Call Write deny lock function from service
+							service.sendDenyLockMessage(hostId, Boolean.FALSE, fileId);
 						}
 						else
 						{
@@ -164,21 +164,22 @@ public class RCServer extends DynamicVoting implements Runnable{
 				}
 				else if(messageObj.messageType.equals(MessageType.REQUEST_LATEST_FILE_READ))
 				{
-					//service call for latest file send for read
+					service.sendUpdatedFileVersion(hostId, Boolean.TRUE, fileId);
 
 				}
 				else if(messageObj.messageType.equals(MessageType.REQUEST_LATEST_FILE_WRITE))
 				{
-					//service call for latest file send for write
+					service.sendUpdatedFileVersion(hostId, Boolean.FALSE, fileId);
 				}
 				else if(messageObj.messageType.equals(MessageType.RESPONSE_LATEST_FILE_READ))
 				{
-					//service call for latest file received for read
+					//TO BE REPLACED WITH METHOD FOR FILEINFO UPDATE METHODS IN SERVICE
 					service.pushDataFromMemoryToFile(messageObj.getFileInfo().getFileId(), messageObj.getFileContent());
 
 				}
 				else if(messageObj.messageType.equals(MessageType.RESPONSE_LATEST_FILE_WRITE))
 				{
+					//TO BE REPLACED WITH METHOD FOR FILEINFO UPDATE METHODS IN SERVICE
 					service.pushDataFromMemoryToFile(messageObj.getFileInfo().getFileId(), messageObj.getFileContent());
 				}
 			}
@@ -196,35 +197,7 @@ public class RCServer extends DynamicVoting implements Runnable{
 	}
 
 
-	/**
-	 * Check if read/write lock is granted
-	 * @param node_id
-	 * @param isReadLock
-	 */
-	public static Boolean checkLock(Boolean isRead, String fileId)
-	{
-		if(isRead)
-		{
-			for(HashMap<String, FileInfo> file : readLockGranted.values())
-			{
-				if(file.get(fileId).lock)
-				{
-					return true;
-				}
-			}
-		}
-		else 
-		{
-			for(HashMap<String, FileInfo> file : writeLockGranted.values())
-			{
-				if(file.get(fileId).isLock())
-				{
-					return true;
-				}
-			}
-		}
-		return false;
-	}
+	
 
 
 	/*public void sendTermination()
