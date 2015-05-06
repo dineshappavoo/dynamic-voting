@@ -24,7 +24,7 @@ public class ServiceSimulation {
 	/**
 	 * @param args
 	 */
-	public static String projectDir = "/home/004/d/dx/dxa132330/advanced-operating-system/projects/dynamic-voting/";
+	public static String projectDir = "/home/eng/a/axt131730/AOS_Proj3/";
 	public int nodeCount = 45;
 	public PrintWriter out;
 
@@ -32,7 +32,7 @@ public class ServiceSimulation {
 
 		ServiceSimulation oService = new ServiceSimulation();
 		oService.createFiles(20);
-		oService.loadFileContentToMemory(projectDir+"files/node1/file1.txt");
+		//oService.loadFileContentToMemory(projectDir+"files/node1/file1.txt");
 
 	}
 
@@ -69,13 +69,20 @@ public class ServiceSimulation {
 			{
 				try
 				{
+					String nodeDir = fileDir+"/node"+i;
+					File nodeDirFile = new File(nodeDir);
+					if(!nodeDirFile.exists()){
+						nodeDirFile.mkdirs();
+					}
 					String fileName = fileDir+"/node"+i+"/file"+j+".txt";
 					out = new PrintWriter(new BufferedWriter(new FileWriter(fileName, true)));
 					out.println(System.currentTimeMillis());
 
 				}catch(IOException ex)
 				{
-					out.close();
+					if(out!=null){
+						out.close();
+					}
 					ex.printStackTrace();	
 				}
 			}
