@@ -175,12 +175,16 @@ public class RCServer extends DynamicVoting implements Runnable{
 				{
 					//TO BE REPLACED WITH METHOD FOR FILEINFO UPDATE METHODS IN SERVICE
 					service.pushDataFromMemoryToFile(messageObj.getFileInfo().getFileId(), messageObj.getFileContent());
+					DynamicVoting.fileInfoMap.put(messageObj.getFileInfo().getFileId(), messageObj.getFileInfo());
+					DynamicVoting.isWaitingForUpdate = false;
 
 				}
 				else if(messageObj.messageType.equals(MessageType.RESPONSE_LATEST_FILE_WRITE))
 				{
 					//TO BE REPLACED WITH METHOD FOR FILEINFO UPDATE METHODS IN SERVICE
 					service.pushDataFromMemoryToFile(messageObj.getFileInfo().getFileId(), messageObj.getFileContent());
+					DynamicVoting.fileInfoMap.put(messageObj.getFileInfo().getFileId(), messageObj.getFileInfo());
+					DynamicVoting.isWaitingForUpdate = false;
 				}
 			}
 		}

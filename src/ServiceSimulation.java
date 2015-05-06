@@ -10,7 +10,9 @@ import java.io.PrintWriter;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.nio.file.Path;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Map;
 import java.util.Map.Entry;
 /**
  * @author Dany
@@ -177,7 +179,6 @@ public class ServiceSimulation {
 		}
 	}
 
-
 	public void sendDenyLockMessage(int node_id, Boolean isRead, String fileId)
 	{
 		Message msgObj;
@@ -229,10 +230,10 @@ public class ServiceSimulation {
 
 
 
-	
+
 	public void sendUpdatedFileVersion(int node_id, Boolean isRead, String fileId)
 	{
-		
+
 		Message msgObj;
 		byte[] fileContent =convertToByteArray(fileId,DynamicVoting.filePath);
 		if(isRead)
@@ -255,17 +256,17 @@ public class ServiceSimulation {
 
 	public static byte[] convertToByteArray(String filename,String filepath) 
 	{
-		
+
 		FileInputStream fis=null;
-        File file = new File(filepath+filename);
-        byte[] byteArray = new byte[(int) file.length()];
-        try {
-        	fis = new FileInputStream(file);
-        	fis.read(byteArray);
-        	fis.close();
-        }catch(Exception e){
-        	e.printStackTrace();
-        }
+		File file = new File(filepath+filename);
+		byte[] byteArray = new byte[(int) file.length()];
+		try {
+			fis = new FileInputStream(file);
+			fis.read(byteArray);
+			fis.close();
+		}catch(Exception e){
+			e.printStackTrace();
+		}
 		return byteArray;
 	}
 
@@ -299,13 +300,253 @@ public class ServiceSimulation {
 		}
 		return false;
 	}
+
+
+
+
+	public void read(String fileId)
+	{
+
+		while(true)
+		{
+			if(!DynamicVoting.isWriting)
+			{
+
+				DynamicVoting.timerOff = false;
+				FileInfo fileInfo;
+				synchronized(DynamicVoting.readLockReceived)
+				{
+					fileInfo = DynamicVoting.readLockReceived.get(DynamicVoting.nodeId).get(fileId);
+					DynamicVoting.readLockReceived.get(DynamicVoting.nodeId).get(fileId).setLock(true);
+				}
+
+				int maxVersionNumber = fileInfo.getVersionNumber();
+				int nValue = fileInfo.getReplicaUpdated();
+
+				for (int id = 0; id < DynamicVoting.noOfNodes; id++) 
+				{
+					if(id != DynamicVoting.nodeId)
+					{
+						//TODO: SET TIMESTAMPS
+						Message msgObj = new Message(null,null,MessageType.REQUEST_READ_LOCK, null,DynamicVoting.nodeMap.get(DynamicVoting.nodeId),
+								DynamicVoting.fileInfoMap.get(fileId), null);
+						Host destination = DynamicVoting.nodeMap.get(id);
+						RCClient rcClient = new RCClient(destination, msgObj);
+						rcClient.go();
+					}
+				}
+				try {
+					Thread.sleep(DynamicVoting.timer);
+				} catch (InterruptedException e) {
+					e.printStackTrace();
+				}
+
+				DynamicVoting.timerOff = Boolean.TRUE;
+				ArrayList<Integer> pList = new ArrayList<Integer>();
+				ArrayList<Integer> quorumList = new ArrayList<Integer>();
+				synchronized(DynamicVoting.readLockReceived)
+				{
+
+					for(Map.Entry<Integer,HashMap<String,FileInfo>> fileInfoMap: DynamicVoting.readLockReceived.entrySet()) 
+					{
+
+						FileInfo file= fileInfoMap.getValue().get(fileId);						
+						if(file.isLock())
+						{
+							pList.add(fileInfoMap.getKey());
+							if(maxVersionNumber<file.getVersionNumber())
+							{
+								maxVersionNumber = file.getVersionNumber();
+								nValue = file.getReplicaUpdated();
+							}
+						}
+					}
+					for(Map.Entry<Integer,HashMap<String,FileInfo>> fileInfoMap: DynamicVoting.readLockReceived.entrySet())
+					{
+						FileInfo file= fileInfoMap.getValue().get(fileId);
+						if(pList.contains(fileInfoMap.getKey()) && file.getVersionNumber()==maxVersionNumber)
+						{
+							quorumList.add(fileInfoMap.getKey());
+						}
+
+					}
+				}
+
+				if(quorumList.size()> Math.ceil(nValue/2))
+				{
+					readFromQuorum(quorumList, maxVersionNumber, fileInfo.getVersionNumber(), fileInfo.getFileId());
+				}
+				else if(quorumList.size()== Math.ceil(nValue/2))
+				{
+					if(quorumList.contains(DynamicVoting.dsNodeId))
+					{
+						readFromQuorum(quorumList, maxVersionNumber, fileInfo.getVersionNumber(), fileInfo.getFileId());
+					}
+				}
+				else
+				{
+					releaseLock(Boolean.TRUE , fileId);
+					//Thread.sleep(DynamicVoting.calculateExpBackOff());
+				}
+
+				if(DynamicVoting.requestCompleted)
+				{
+					DynamicVoting.requestCompleted = false;
+					break;
+				}
+			}
+		}
+
+
+	}
+
+	private void readFromQuorum(ArrayList<Integer> quorumList , Integer maxVersionNumber, Integer currentFileVersion, String fileId) {
+
+		if(currentFileVersion!=maxVersionNumber)
+		{
+			DynamicVoting.isWaitingForUpdate=true;
+			getUpdatedFileVersion(quorumList.get(0),Boolean.TRUE, fileId);
+		}
+
+		while(DynamicVoting.isWaitingForUpdate);
+		csRead();
+		DynamicVoting.requestCompleted=true;
+		releaseLock(true, fileId);
+	}
+
 	
+	public void write(String fileId)
+	{
+
+		while(true)
+		{
+			if(!DynamicVoting.isWriting && !checkLock(true, fileId) && !checkLock(false, fileId))
+			{
+
+				DynamicVoting.timerOff = false;
+				FileInfo fileInfo;
+				DynamicVoting.isWriting = true;
+				synchronized(DynamicVoting.writeLockReceived)
+				{
+					fileInfo = DynamicVoting.writeLockReceived.get(DynamicVoting.nodeId).get(fileId);
+					DynamicVoting.writeLockReceived.get(DynamicVoting.nodeId).get(fileId).setLock(true);
+				}
+
+				int maxVersionNumber = fileInfo.getVersionNumber();
+				int nValue = fileInfo.getReplicaUpdated();
+
+				for (int id = 0; id < DynamicVoting.noOfNodes; id++) 
+				{
+					if(id != DynamicVoting.nodeId)
+					{
+						//TODO: SET TIMESTAMPS
+						Message msgObj = new Message(null,null,MessageType.REQUEST_WRITE_LOCK, null,DynamicVoting.nodeMap.get(DynamicVoting.nodeId),
+								DynamicVoting.fileInfoMap.get(fileId), null);
+						Host destination = DynamicVoting.nodeMap.get(id);
+						RCClient rcClient = new RCClient(destination, msgObj);
+						rcClient.go();
+					}
+				}
+				try {
+					Thread.sleep(DynamicVoting.timer);
+				} catch (InterruptedException e) {
+					e.printStackTrace();
+				}
+
+				DynamicVoting.timerOff = Boolean.TRUE;
+				ArrayList<Integer> pList = new ArrayList<Integer>();
+				ArrayList<Integer> quorumList = new ArrayList<Integer>();
+				synchronized(DynamicVoting.writeLockReceived)
+				{
+
+					for(Map.Entry<Integer,HashMap<String,FileInfo>> fileInfoMap: DynamicVoting.writeLockReceived.entrySet()) 
+					{
+
+						FileInfo file= fileInfoMap.getValue().get(fileId);						
+						if(file.isLock())
+						{
+							pList.add(fileInfoMap.getKey());
+							if(maxVersionNumber<file.getVersionNumber())
+							{
+								maxVersionNumber = file.getVersionNumber();
+								nValue = file.getReplicaUpdated();
+							}
+						}
+					}
+					for(Map.Entry<Integer,HashMap<String,FileInfo>> fileInfoMap: DynamicVoting.writeLockReceived.entrySet())
+					{
+						FileInfo file= fileInfoMap.getValue().get(fileId);
+						if(pList.contains(fileInfoMap.getKey()) && file.getVersionNumber()==maxVersionNumber)
+						{
+							quorumList.add(fileInfoMap.getKey());
+						}
+
+					}
+				}
+
+				if(quorumList.size()> Math.ceil(nValue/2))
+				{
+					writeIntoQuorum(quorumList, maxVersionNumber, fileInfo.getVersionNumber(), fileInfo.getFileId());
+				}
+				else if(quorumList.size()== Math.ceil(nValue/2))
+				{
+					if(quorumList.contains(DynamicVoting.dsNodeId))
+					{
+						writeIntoQuorum(quorumList, maxVersionNumber, fileInfo.getVersionNumber(), fileInfo.getFileId());
+					}
+				}
+				else
+				{
+					releaseLock(Boolean.FALSE , fileId);
+					//Thread.sleep(DynamicVoting.calculateExpBackOff());
+				}
+
+				if(DynamicVoting.requestCompleted)
+				{
+						
+
+						//Update RU Value
+						DynamicVoting.fileInfoMap.get(fileId).setReplicaUpdated(quorumList.size());
+						//Increment Version Number
+						DynamicVoting.fileInfoMap.get(fileId).setVersionNumber(maxVersionNumber+1);
+
+						for (int i = 0; i < pList.size(); i++) 
+						{
+
+							sendUpdatedFileVersion(pList.get(i), false, fileId);
+						}
+						DynamicVoting.requestCompleted = false;
+						break;
+					}
+
+				}
+			}
+		}
+
+
+	}
+
+	private void writeIntoQuorum(ArrayList<Integer> quorumList , Integer maxVersionNumber, Integer currentFileVersion, String fileId) {
+
+		if(currentFileVersion!=maxVersionNumber)
+		{
+			DynamicVoting.isWaitingForUpdate=true;
+			getUpdatedFileVersion(quorumList.get(0),Boolean.FALSE, fileId);
+		}
+
+		while(DynamicVoting.isWaitingForUpdate);
+		csWrite();
+		DynamicVoting.requestCompleted=true;
+		releaseLock(false, fileId);
+		DynamicVoting.isWriting = false;
+	}
+
+
 	/////////////////////////////////////////////////////////////////////
 	////////////////////////////////////////////////////////////////////
 	///////////////////////////////////////////////////////////////////
-	
-	
-	
-	//Working on read and write operations
+
+
+//csread and cswrite left...Also pending actual read and write of the files
 
 }

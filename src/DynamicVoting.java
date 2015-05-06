@@ -32,6 +32,9 @@ public class DynamicVoting {
 	public static int fractionOfOperations;
 	public static int minBackOff;
 	public static int maxBackOff;
+	public static Boolean requestCompleted = false;
+	public static long timer = 200; //200ms
+	public static int dsNodeId =1 ; //hardcoded for now to node-1
 	public static String filePath; //Hardode with the filepath for the node
 	
 	public static ConcurrentHashMap<Integer, HashMap<String, FileInfo>> readLockReceived = new ConcurrentHashMap<Integer, HashMap<String, FileInfo>>();
@@ -40,7 +43,7 @@ public class DynamicVoting {
 	public static ConcurrentHashMap<Integer, HashMap<String, FileInfo>> writeLockGranted = new ConcurrentHashMap<Integer, HashMap<String, FileInfo>>();
 	public static ConcurrentHashMap<String, FileInfo> fileInfoMap = new ConcurrentHashMap<String, FileInfo>();
 
-
+	
 	public static Boolean isTerminationSent = false;
 	public static HashMap<Integer, Host> nodeMap;
 	public static int nWaitingForTerminationResponseCount=0;
@@ -49,6 +52,7 @@ public class DynamicVoting {
 	public static AtomicInteger currentNodeTimestamp = new AtomicInteger(0);
 	public static int count = 0;
 	public static Boolean timerOff;
+	public static boolean isWaitingForUpdate = false;
 	//public static RCServer rCServer = new RCServer();
 	public PrintWriter out;
 
