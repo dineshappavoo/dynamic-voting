@@ -13,6 +13,7 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Scanner;
 import java.util.Map.Entry;
 /**
  * @author Dany
@@ -48,7 +49,7 @@ public class ServiceSimulation {
 	{
 		try
 		{
-			out = new PrintWriter(new BufferedWriter(new FileWriter(fileName, true)));
+			out = new PrintWriter(new BufferedWriter(new FileWriter(fileName, false)));
 			out.println(data);
 
 		}catch(IOException ex)
@@ -409,12 +410,12 @@ public class ServiceSimulation {
 		}
 
 		while(DynamicVoting.isWaitingForUpdate);
-		csRead();
+		readOp(DynamicVoting.filePath+fileId);
 		DynamicVoting.requestCompleted=true;
 		releaseLock(true, fileId);
 	}
 
-	
+
 	public void write(String fileId)
 	{
 
@@ -503,28 +504,25 @@ public class ServiceSimulation {
 
 				if(DynamicVoting.requestCompleted)
 				{
-						
 
-						//Update RU Value
-						DynamicVoting.fileInfoMap.get(fileId).setReplicaUpdated(quorumList.size());
-						//Increment Version Number
-						DynamicVoting.fileInfoMap.get(fileId).setVersionNumber(maxVersionNumber+1);
+					//Update RU Value
+					DynamicVoting.fileInfoMap.get(fileId).setReplicaUpdated(quorumList.size());
+					//Increment Version Number
+					DynamicVoting.fileInfoMap.get(fileId).setVersionNumber(maxVersionNumber+1);
 
-						for (int i = 0; i < pList.size(); i++) 
-						{
+					for (int i = 0; i < pList.size(); i++) 
+					{
 
-							sendUpdatedFileVersion(pList.get(i), false, fileId);
-						}
-						DynamicVoting.requestCompleted = false;
-						break;
+						sendUpdatedFileVersion(pList.get(i), false, fileId);
 					}
-
+					DynamicVoting.requestCompleted = false;
+					break;
 				}
+
 			}
 		}
-
-
 	}
+
 
 	private void writeIntoQuorum(ArrayList<Integer> quorumList , Integer maxVersionNumber, Integer currentFileVersion, String fileId) {
 
@@ -535,18 +533,55 @@ public class ServiceSimulation {
 		}
 
 		while(DynamicVoting.isWaitingForUpdate);
-		csWrite();
+		writeOp(DynamicVoting.filePath+fileId);
 		DynamicVoting.requestCompleted=true;
 		releaseLock(false, fileId);
 		DynamicVoting.isWriting = false;
 	}
 
 
-	/////////////////////////////////////////////////////////////////////
-	////////////////////////////////////////////////////////////////////
-	///////////////////////////////////////////////////////////////////
 
+	public void readOp(String fileId)
+	{
+		Scanner scanner = null;
+		try
+		{
+			File file = new File(fileId);
+			scanner=new Scanner(file);
+			//Read file
+			while(scanner.hasNext())
+			{
+				Thread.sleep(10);
+			}
 
-//csread and cswrite left...Also pending actual read and write of the files
+		}catch (IOException e) {
+			e.printStackTrace();
+		} catch (InterruptedException e) {
+			e.printStackTrace();
+		}finally{
+			if(scanner != null){
+				//Close resource file
+				scanner.close();
+			}
+		}
+	}
+
+	public void writeOp(String fileId)
+	{
+		PrintWriter pw = null;
+		try {
+			pw = new PrintWriter(fileId);
+			pw.println("[Node-"+DynamicVoting.nodeId+"] writing on File");
+
+		} catch (IOException e) {
+			e.printStackTrace();
+		}finally{
+			if(pw != null){
+				//Close resource file
+				pw.close();
+			}
+		}
+	}
+
 
 }
