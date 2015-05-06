@@ -3,6 +3,7 @@
  */
 import java.io.BufferedWriter;
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.PrintWriter;
@@ -40,7 +41,7 @@ public class ServiceSimulation {
 		System.out.println("Data : "+data);
 		return data;
 	}
-	
+
 	public void pushDataFromMemoryToFile(String fileName, byte[] data)
 	{
 		try
@@ -77,7 +78,7 @@ public class ServiceSimulation {
 			}
 		}
 	}
-	
+
 	public void grantLock(int node_id, Boolean isReadLock, String file_id)
 	{
 		FileInfo fileInfo;
@@ -129,7 +130,7 @@ public class ServiceSimulation {
 
 	}
 
-	
+
 	public void releaseLock(Boolean isRead, String fileId)
 	{
 		if(isRead)
@@ -141,13 +142,13 @@ public class ServiceSimulation {
 					if(nodeEntry.getValue().get(fileId) != null && nodeEntry.getValue().get(fileId).isLock())
 					{
 						Host destination = DynamicVoting.nodeMap.get(nodeEntry.getKey());
-						 
+
 						//TODO: Update timestamps
 						Message msgObj = new Message(null,null,MessageType.RELEASE_READ_LOCK, null,DynamicVoting.nodeMap.get(DynamicVoting.nodeId),
 								nodeEntry.getValue().get(fileId), null);
 						RCClient rcClient = new RCClient(destination, msgObj);
 						rcClient.go();
-						
+
 						nodeEntry.getValue().get(fileId).setLock(false);
 					}
 				}
@@ -162,7 +163,7 @@ public class ServiceSimulation {
 					if(nodeEntry.getValue().get(fileId) != null && nodeEntry.getValue().get(fileId).isLock())
 					{
 						Host destination = DynamicVoting.nodeMap.get(nodeEntry.getKey());
-						 
+
 						//TODO: Update timestamps and set in Message
 						Message msgObj = new Message(null,null,MessageType.RELEASE_WRITE_LOCK, null,DynamicVoting.nodeMap.get(DynamicVoting.nodeId),
 								nodeEntry.getValue().get(fileId), null);
@@ -172,15 +173,139 @@ public class ServiceSimulation {
 					}
 				}
 			}
-		
+
 		}
 	}
-		
-		
-/////////////////////////////////////////////////////////////////////
-////////////////////////////////////////////////////////////////////
-///////////////////////////////////////////////////////////////////
 
-	//WORKING ON REST OF THE METHODS
+
+	public void sendDenyLockMessage(int node_id, Boolean isRead, String fileId)
+	{
+		Message msgObj;
+		FileInfo fileInfo = new FileInfo();
+		fileInfo.setFileId(fileId);
+		if(isRead)
+		{
+			//TODO: Update timestamps and set in Message
+			msgObj = new Message(null,null,MessageType.RESPONSE_READ, Status.DENY,DynamicVoting.nodeMap.get(DynamicVoting.nodeId),
+					fileInfo, null);
+		}
+		else 
+		{
+			//TODO: Update timestamps and set in Message
+			msgObj = new Message(null,null,MessageType.RESPONSE_WRITE, Status.DENY,DynamicVoting.nodeMap.get(DynamicVoting.nodeId),
+					fileInfo, null);
+		}
+		Host destination = DynamicVoting.nodeMap.get(node_id);
+
+
+		RCClient rcClient = new RCClient(destination, msgObj);
+		rcClient.go();
+	}
+
+
+	public void getUpdatedFileVersion(int node_id, Boolean isRead, String fileId)
+	{
+		Message msgObj;
+		FileInfo fileInfo = new FileInfo();
+		fileInfo.setFileId(fileId);
+		if(isRead)
+		{
+			//TODO: Update timestamps and set in Message
+			msgObj = new Message(null,null,MessageType.REQUEST_LATEST_FILE_READ, null,DynamicVoting.nodeMap.get(DynamicVoting.nodeId),
+					fileInfo, null);
+		}
+		else 
+		{
+			//TODO: Update timestamps and set in Message
+			msgObj = new Message(null,null,MessageType.REQUEST_LATEST_FILE_WRITE, null,DynamicVoting.nodeMap.get(DynamicVoting.nodeId),
+					fileInfo, null);
+		}
+		Host destination = DynamicVoting.nodeMap.get(node_id);
+
+
+		RCClient rcClient = new RCClient(destination, msgObj);
+		rcClient.go();
+	}
+
+
+
 	
+	public void sendUpdatedFileVersion(int node_id, Boolean isRead, String fileId)
+	{
+		
+		Message msgObj;
+		byte[] fileContent =convertToByteArray(fileId,DynamicVoting.filePath);
+		if(isRead)
+		{
+			//TODO: Update timestamps and set in Message
+			msgObj = new Message(null,null,MessageType.RESPONSE_LATEST_FILE_READ, null,DynamicVoting.nodeMap.get(DynamicVoting.nodeId),
+					DynamicVoting.fileInfoMap.get(fileId), fileContent);
+		}
+		else 
+		{
+			//TODO: Update timestamps and set in Message
+			msgObj = new Message(null,null,MessageType.RESPONSE_LATEST_FILE_WRITE, null,DynamicVoting.nodeMap.get(DynamicVoting.nodeId),
+					DynamicVoting.fileInfoMap.get(fileId), fileContent);
+		}
+		Host destination = DynamicVoting.nodeMap.get(node_id);
+		RCClient rcClient = new RCClient(destination, msgObj);
+		rcClient.go();
+	}
+
+
+	public static byte[] convertToByteArray(String filename,String filepath) 
+	{
+		
+		FileInputStream fis=null;
+        File file = new File(filepath+filename);
+        byte[] byteArray = new byte[(int) file.length()];
+        try {
+        	fis = new FileInputStream(file);
+        	fis.read(byteArray);
+        	fis.close();
+        }catch(Exception e){
+        	e.printStackTrace();
+        }
+		return byteArray;
+	}
+
+
+	/**
+	 * Check if read/write lock is granted
+	 * @param node_id
+	 * @param isReadLock
+	 */
+	public Boolean checkLock(Boolean isRead, String fileId)
+	{
+		if(isRead)
+		{
+			for(HashMap<String, FileInfo> file : DynamicVoting.readLockGranted.values())
+			{
+				if(file.get(fileId).isLock())
+				{
+					return true;
+				}
+			}
+		}
+		else 
+		{
+			for(HashMap<String, FileInfo> file : DynamicVoting.writeLockGranted.values())
+			{
+				if(file.get(fileId).isLock())
+				{
+					return true;
+				}
+			}
+		}
+		return false;
+	}
+	
+	/////////////////////////////////////////////////////////////////////
+	////////////////////////////////////////////////////////////////////
+	///////////////////////////////////////////////////////////////////
+	
+	
+	
+	//Working on read and write operations
+
 }

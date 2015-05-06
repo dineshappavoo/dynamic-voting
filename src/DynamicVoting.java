@@ -32,12 +32,13 @@ public class DynamicVoting {
 	public static int fractionOfOperations;
 	public static int minBackOff;
 	public static int maxBackOff;
+	public static String filePath; //Hardode with the filepath for the node
 	
 	public static ConcurrentHashMap<Integer, HashMap<String, FileInfo>> readLockReceived = new ConcurrentHashMap<Integer, HashMap<String, FileInfo>>();
 	public static ConcurrentHashMap<Integer, HashMap<String, FileInfo>> readLockGranted = new ConcurrentHashMap<Integer, HashMap<String, FileInfo>>();
 	public static ConcurrentHashMap<Integer, HashMap<String, FileInfo>> writeLockReceived = new ConcurrentHashMap<Integer, HashMap<String, FileInfo>>();
 	public static ConcurrentHashMap<Integer, HashMap<String, FileInfo>> writeLockGranted = new ConcurrentHashMap<Integer, HashMap<String, FileInfo>>();
-	public static ConcurrentHashMap<Integer, HashMap<String, FileInfo>> ReadLockReceived = new ConcurrentHashMap<Integer, HashMap<String, FileInfo>>();
+	public static ConcurrentHashMap<String, FileInfo> fileInfoMap = new ConcurrentHashMap<String, FileInfo>();
 
 
 	public static Boolean isTerminationSent = false;
