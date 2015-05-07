@@ -184,9 +184,34 @@ public class RCServer extends DynamicVoting implements Runnable{
 					service.pushDataFromMemoryToFile(messageObj.getFileInfo().getFileId(), messageObj.getFileContent());
 					DynamicVoting.fileInfoMap.put(messageObj.getFileInfo().getFileId(), messageObj.getFileInfo());
 					DynamicVoting.isWaitingForUpdate = false;
-				}else if(messageObj.messageType.equals(MessageType.RESPONSE_LATEST_FILE_WRITE))
+				}else if(messageObj.messageType.equals(MessageType.RECOVERY_RESPONSE))
 				{
-					
+					if(messageObj.status.equals(Status.GRANT))
+					{
+						if(timerOff)
+						{
+							service.sendDenyLockMessage(hostId, Boolean.FALSE, fileId);
+						}
+						else
+						{
+							synchronized(writeLockReceived)
+							{
+								FileInfo fileInfo = new FileInfo();
+								fileInfo.setFileId(fileId);
+								fileInfo.setVersionNumber(messageObj.getFileInfo().getVersionNumber());
+								fileInfo.setReplicaUpdated(messageObj.getFileInfo().getReplicaUpdated());
+								fileInfo.setLock(true);
+								writeLockReceived.get(hostId).put(fileInfo.getFileId(), fileInfo);
+							}
+						}
+					}
+					else if(messageObj.status.equals(Status.DENY))
+					{
+						synchronized(writeLockReceived)
+						{
+							writeLockReceived.get(hostId).get(fileId).setLock(false);
+						}
+					}
 				}
 			}
 		}
