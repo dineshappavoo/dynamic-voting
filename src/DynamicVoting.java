@@ -168,8 +168,8 @@ public class DynamicVoting {
 
 	public void simulateDynamicVoting() throws FileNotFoundException
 	{
-		HashMap<Integer, Host> nMap = constructGraph("/Users/Dany/Documents/FALL-2013-COURSES/Imp_Data_structures/workspace/roucairol-carvalho/src/config.txt", nodeId);
-		//HashMap<Integer, Host> nMap = constructGraph("config.txt", nodeId);
+		//HashMap<Integer, Host> nMap = constructGraph("/Users/Dany/Documents/FALL-2013-COURSES/Imp_Data_structures/workspace/roucairol-carvalho/src/config.txt", nodeId);
+		HashMap<Integer, Host> nMap = constructGraph("config.txt", nodeId);
 
 		//System.out.println("[INFO]	["+sTime()+"]	No Of CS : "+noOfCriticalSectionRequests+"  Mean Delay : "+meanDelayInCriticalSection+"  Duration Of CS : "+durationOfCriticalSection);
 		//startServer();
