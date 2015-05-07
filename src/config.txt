@@ -8,9 +8,9 @@
 # Number of nodes
 p 3    
     
-n   0               dc45        11061   
-n   1               dc25        11062
-n   2               dc26        11063
+n   0               dc45        11076   
+n   1               dc25        11077
+n   2               dc26        11078
 
 
 totalnooffiles 20

@@ -124,7 +124,7 @@ public class ServiceSimulation implements Runnable{
 			while(operationsCompleted<noOfOperations)
 			{
 				fileNumber = randInt(1, 20);		
-				fileId="file"+fileNumber+".txt";
+				fileId="file"+fileNumber;
 
 				coinToss = randInt(0, 1);
 				System.out.println("Coin Toss "+coinToss);
@@ -646,7 +646,7 @@ public class ServiceSimulation implements Runnable{
 		}
 
 		while(DynamicVoting.isWaitingForUpdate);
-		writeOp(DynamicVoting.filePath+fileId);
+		writeOp(DynamicVoting.filePath+fileId+".txt");
 		DynamicVoting.requestCompleted=true;
 		releaseLock(false, fileId);
 		DynamicVoting.isWriting = false;

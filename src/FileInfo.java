@@ -1,3 +1,5 @@
+import java.io.Serializable;
+
 /**
  * 
  */
@@ -6,7 +8,7 @@
  * @author Dany
  *
  */
-public class FileInfo {
+public class FileInfo implements Serializable{
 
 	String fileId;
 	int versionNumber;

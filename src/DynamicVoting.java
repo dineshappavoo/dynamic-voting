@@ -61,12 +61,50 @@ public class DynamicVoting {
 	{
 		filePath = "files/node"+nodeId+"/";
 		nodeName = nodeMap.get(nodeId).getHostName();
-		nodePort = nodeMap.get(nodeId).getHostPort();
+		nodePort = nodeMap.get(nodeId).getHostPort();		
+		initializeNodeData();
 		
 		System.out.println("No Of Operations DV : "+noOfOperations);
 		new Thread(rCServer).start();
 		oService = new ServiceSimulation(nodeId, noOfOperations, meanDelay);
 		new Thread(oService).start();
+	}
+	
+	
+	public void initializeNodeData()
+	{
+		initializeMap(readLockReceived);
+		initializeMap(readLockGranted);
+		initializeMap(writeLockReceived);
+		initializeMap(writeLockGranted);
+		
+		initializeFileInfo(fileInfoMap);
+	}
+	
+	public void initializeMap(ConcurrentHashMap<Integer, HashMap<String, FileInfo>> map)
+	{
+		HashMap<String, FileInfo> hMap;
+		String fileId = "file";
+		
+		for(int nId : nodeMap.keySet())
+		{
+			hMap = new HashMap<String, FileInfo>();
+			for(int i=0;i<noOfFiles;i++)
+			{
+				hMap.put(fileId+i, new FileInfo(fileId+i, 0, 0, false));
+			}
+			map.put(nId, hMap);
+		}
+	}
+	
+	public void initializeFileInfo(ConcurrentHashMap<String, FileInfo> fileMap)
+	{
+		String fileId = "file";
+
+		for(int i=0;i<noOfFiles;i++)
+		{
+			fileMap.put(fileId+i, new FileInfo(fileId+i, 0, 0, false));
+		}
 	}
 	
 	/**
