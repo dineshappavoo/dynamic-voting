@@ -53,14 +53,15 @@ public class DynamicVoting {
 	public static int count = 0;
 	public static Boolean timerOff;
 	public static boolean isWaitingForUpdate = false;
-	//public static RCServer rCServer = new RCServer();
+	public static RCServer rCServer = new RCServer();
+	public ServiceSimulation oService;
 	public PrintWriter out;
 
 	public void startServer()
 	{
-		//new Thread(rCServer).start();
-		//oAppClient = new ApplicationClient(noOfCriticalSectionRequests, meanDelayInCriticalSection, durationOfCriticalSection);
-		//new Thread(oAppClient).start();
+		new Thread(rCServer).start();
+		oService = new ServiceSimulation(nodeId, noOfOperations);
+		new Thread(oService).start();
 	}
 
 	public void displayCSMessage(int nodeId)

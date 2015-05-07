@@ -13,13 +13,14 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Random;
 import java.util.Scanner;
 import java.util.Map.Entry;
 /**
  * @author Dany
  *
  */
-public class ServiceSimulation {
+public class ServiceSimulation implements Runnable{
 
 	/**
 	 * @param args
@@ -27,15 +28,18 @@ public class ServiceSimulation {
 	public static String projectDir = "/home/eng/a/axt131730/AOS_Proj3/";
 	public int nodeCount = 45;
 	public PrintWriter out;
+	public static Random rand;//= new Random();
+	static int noOfOperations;
+	static int noOfReadOperations;
+	static int noOfWriteOperations;
+	private static int nodeId;
 
-	public static void main(String[] args) throws Exception {
 
-		ServiceSimulation oService = new ServiceSimulation();
-		oService.createFiles(20);
-		//oService.loadFileContentToMemory(projectDir+"files/node1/file1.txt");
-
+	public ServiceSimulation(int nodeId, int noOfOperations)
+	{
+		this.noOfOperations = noOfOperations;
+		this.nodeId = nodeId;
 	}
-
 
 	public byte[] loadFileContentToMemory(String filename) throws Exception
 	{
@@ -87,6 +91,81 @@ public class ServiceSimulation {
 				}
 			}
 		}
+	}
+
+
+	public void initiateVoting()
+	{
+
+		int operationsCompleted = 0;
+		int readOperationsCompleted = 0;
+		int writeOperationsCompleted = 0;
+
+		int coinToss = 0;
+		int fileNumber;
+		String fileName = "";
+
+		while(operationsCompleted<noOfOperations)
+		{
+			fileNumber = randInt(1, 20);		
+			fileName="files/node"+nodeId+"file"+fileNumber+".txt";
+			
+			coinToss = randInt(0, 1);
+			if(coinToss == 0)
+			{
+				//Read Operation
+				if(readOperationsCompleted<noOfReadOperations)
+				{
+					readOp(fileName);
+					readOperationsCompleted++;
+					operationsCompleted++;
+				}else
+				{
+					if(writeOperationsCompleted<noOfWriteOperations)
+					{
+
+						writeOp(fileName);
+						writeOperationsCompleted++;
+						operationsCompleted++;
+					}
+				}
+			}else
+			{
+				//write operation
+				if(writeOperationsCompleted<noOfWriteOperations)
+				{
+
+					writeOp(fileName);
+					writeOperationsCompleted++;
+					operationsCompleted++;
+
+				}else
+				{
+					if(readOperationsCompleted<noOfReadOperations)
+					{
+						readOp(fileName);
+						readOperationsCompleted++;
+						operationsCompleted++;
+					}
+				}
+			}
+
+		}
+		
+		System.out.println("Node "+nodeId+" completed the process");
+
+	}
+
+	public static int randInt(int min, int max) {
+
+		// NOTE: Usually this should be a field rather than a method
+		// variable so that it is not re-seeded every call.
+		rand = new Random();
+
+		// nextInt is normally exclusive of the top value,
+		// so add 1 to make it inclusive
+		int randomNum = rand.nextInt((max - min) + 1) + min;
+		return randomNum;
 	}
 
 	public void grantLock(int node_id, Boolean isReadLock, String file_id)
@@ -591,4 +670,16 @@ public class ServiceSimulation {
 	}
 
 
+	public void run()
+	{
+		initiateVoting();
+	}
+
+	public static void main(String[] args) throws Exception {
+
+		ServiceSimulation oService = new ServiceSimulation();
+		oService.createFiles(20);
+		//oService.loadFileContentToMemory(projectDir+"files/node1/file1.txt");
+
+	}
 }
