@@ -30,15 +30,18 @@ public class ServiceSimulation implements Runnable{
 	public PrintWriter out;
 	public static Random rand;//= new Random();
 	static int noOfOperations;
+	static int meanDelay;
+	
 	static int noOfReadOperations;
 	static int noOfWriteOperations;
 	private static int nodeId;
 
 
-	public ServiceSimulation(int nodeId, int noOfOperations)
+	public ServiceSimulation(int nodeId, int noOfOperations, int meanDelay)
 	{
 		this.noOfOperations = noOfOperations;
 		this.nodeId = nodeId;
+		this.meanDelay = meanDelay;
 	}
 
 	public byte[] loadFileContentToMemory(String filename) throws Exception
@@ -150,6 +153,7 @@ public class ServiceSimulation implements Runnable{
 				}
 			}
 
+			Thread.sleep(meanDelay);
 		}
 		
 		System.out.println("Node "+nodeId+" completed the process");

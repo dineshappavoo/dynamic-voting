@@ -60,7 +60,7 @@ public class DynamicVoting {
 	public void startServer()
 	{
 		new Thread(rCServer).start();
-		oService = new ServiceSimulation(nodeId, noOfOperations);
+		oService = new ServiceSimulation(nodeId, noOfOperations, meanDelay);
 		new Thread(oService).start();
 	}
 
