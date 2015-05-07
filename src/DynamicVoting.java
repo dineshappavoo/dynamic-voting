@@ -22,20 +22,28 @@ public class DynamicVoting {
 
 	public static int noOfNodes;
 	public static int nodeId;
+	public static String nodeName;
+	public static int nodePort;
+	public static boolean isReading;
+	public static Boolean isWriting;
 	public static int noOfFiles;
 	public static int noOfOperations;
 	public static int meanDelay;
 	public static int fractionOfOperations;
 	public static int minBackOff;
 	public static int maxBackOff;
+	public static Boolean requestCompleted = false;
+	public static long timer = 200; //200ms
+	public static int dsNodeId =1 ; //hardcoded for now to node-1
+	public static String filePath; //Hardode with the filepath for the node
 	
 	public static ConcurrentHashMap<Integer, HashMap<String, FileInfo>> readLockReceived = new ConcurrentHashMap<Integer, HashMap<String, FileInfo>>();
 	public static ConcurrentHashMap<Integer, HashMap<String, FileInfo>> readLockGranted = new ConcurrentHashMap<Integer, HashMap<String, FileInfo>>();
 	public static ConcurrentHashMap<Integer, HashMap<String, FileInfo>> writeLockReceived = new ConcurrentHashMap<Integer, HashMap<String, FileInfo>>();
 	public static ConcurrentHashMap<Integer, HashMap<String, FileInfo>> writeLockGranted = new ConcurrentHashMap<Integer, HashMap<String, FileInfo>>();
-	public static ConcurrentHashMap<Integer, HashMap<String, FileInfo>> ReadLockReceived = new ConcurrentHashMap<Integer, HashMap<String, FileInfo>>();
+	public static ConcurrentHashMap<String, FileInfo> fileInfoMap = new ConcurrentHashMap<String, FileInfo>();
 
-
+	
 	public static Boolean isTerminationSent = false;
 	public static HashMap<Integer, Host> nodeMap;
 	public static int nWaitingForTerminationResponseCount=0;
@@ -43,7 +51,8 @@ public class DynamicVoting {
 	public static PriorityQueue<Message> minHeap = getPriorityQueue();
 	public static AtomicInteger currentNodeTimestamp = new AtomicInteger(0);
 	public static int count = 0;
-	public static  ApplicationClient oAppClient;	
+	public static Boolean timerOff;
+	public static boolean isWaitingForUpdate = false;
 	//public static RCServer rCServer = new RCServer();
 	public PrintWriter out;
 
@@ -117,7 +126,7 @@ public class DynamicVoting {
 
 						if(nodeMap.get(hostId)==null)// || hostId != nodeId)
 						{
-							nodeMap.put(hostId, new Host(hostId, hostName, hostPort, false, false));
+							nodeMap.put(hostId, new Host(hostId, hostName, hostPort));
 						}
 					}
 				}
