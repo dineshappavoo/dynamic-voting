@@ -107,11 +107,12 @@ public class ServiceSimulation implements Runnable{
 		int coinToss = 0;
 		int fileNumber;
 		String fileName = "";
+		String fileId = "";
 
 		while(operationsCompleted<noOfOperations)
 		{
 			fileNumber = randInt(1, 20);		
-			fileName="files/node"+nodeId+"file"+fileNumber+".txt";
+			fileId="file"+fileNumber+".txt";
 			
 			coinToss = randInt(0, 1);
 			if(coinToss == 0)
@@ -119,7 +120,7 @@ public class ServiceSimulation implements Runnable{
 				//Read Operation
 				if(readOperationsCompleted<noOfReadOperations)
 				{
-					readOp(fileName);
+					read(fileId);
 					readOperationsCompleted++;
 					operationsCompleted++;
 				}else
@@ -127,7 +128,7 @@ public class ServiceSimulation implements Runnable{
 					if(writeOperationsCompleted<noOfWriteOperations)
 					{
 
-						writeOp(fileName);
+						write(fileId);
 						writeOperationsCompleted++;
 						operationsCompleted++;
 					}
@@ -138,7 +139,7 @@ public class ServiceSimulation implements Runnable{
 				if(writeOperationsCompleted<noOfWriteOperations)
 				{
 
-					writeOp(fileName);
+					write(fileId);
 					writeOperationsCompleted++;
 					operationsCompleted++;
 
@@ -146,7 +147,7 @@ public class ServiceSimulation implements Runnable{
 				{
 					if(readOperationsCompleted<noOfReadOperations)
 					{
-						readOp(fileName);
+						read(fileId);
 						readOperationsCompleted++;
 						operationsCompleted++;
 					}
@@ -681,8 +682,8 @@ public class ServiceSimulation implements Runnable{
 
 	public static void main(String[] args) throws Exception {
 
-		ServiceSimulation oService = new ServiceSimulation();
-		oService.createFiles(20);
+		//ServiceSimulation oService = new ServiceSimulation();
+		//oService.createFiles(20);
 		//oService.loadFileContentToMemory(projectDir+"files/node1/file1.txt");
 
 	}
