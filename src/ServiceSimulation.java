@@ -31,7 +31,7 @@ public class ServiceSimulation implements Runnable{
 	public static Random rand;//= new Random();
 	static int noOfOperations;
 	static int meanDelay;
-	
+
 	static int noOfReadOperations;
 	static int noOfWriteOperations;
 	private static int nodeId;
@@ -42,6 +42,11 @@ public class ServiceSimulation implements Runnable{
 		this.noOfOperations = noOfOperations;
 		this.nodeId = nodeId;
 		this.meanDelay = meanDelay;
+	}
+
+	public ServiceSimulation()
+	{
+		;
 	}
 
 	public byte[] loadFileContentToMemory(String filename) throws Exception
@@ -104,59 +109,76 @@ public class ServiceSimulation implements Runnable{
 		int readOperationsCompleted = 0;
 		int writeOperationsCompleted = 0;
 
+		noOfReadOperations  = noOfOperations * (80/100);
+		noOfWriteOperations = noOfOperations - noOfReadOperations;
 		int coinToss = 0;
 		int fileNumber;
 		String fileName = "";
 		String fileId = "";
 
-		while(operationsCompleted<noOfOperations)
-		{
-			fileNumber = randInt(1, 20);		
-			fileId="file"+fileNumber+".txt";
-			
-			coinToss = randInt(0, 1);
-			if(coinToss == 0)
+		System.out.println("INITIATED THE PROTOCOL");
+		System.out.println("Number of Operations : "+noOfOperations);
+		//noOfOperations = 10;
+		try {
+
+			while(operationsCompleted<noOfOperations)
 			{
-				//Read Operation
-				if(readOperationsCompleted<noOfReadOperations)
-				{
-					read(fileId);
-					readOperationsCompleted++;
-					operationsCompleted++;
-				}else
-				{
-					if(writeOperationsCompleted<noOfWriteOperations)
-					{
+				fileNumber = randInt(1, 20);		
+				fileId="file"+fileNumber+".txt";
 
-						write(fileId);
-						writeOperationsCompleted++;
-						operationsCompleted++;
-					}
-				}
-			}else
-			{
-				//write operation
-				if(writeOperationsCompleted<noOfWriteOperations)
+				coinToss = randInt(0, 1);
+				System.out.println("Coin Toss "+coinToss);
+				if(coinToss == 0)
 				{
-
-					write(fileId);
-					writeOperationsCompleted++;
-					operationsCompleted++;
-
-				}else
-				{
+					//Read Operation
 					if(readOperationsCompleted<noOfReadOperations)
 					{
+						System.out.println("Read operation initiated");
 						read(fileId);
 						readOperationsCompleted++;
 						operationsCompleted++;
+					}else
+					{
+						if(writeOperationsCompleted<noOfWriteOperations)
+						{
+
+							System.out.println("Write operation initiated");
+							write(fileId);
+							writeOperationsCompleted++;
+							operationsCompleted++;
+						}
+					}
+				}else
+				{
+					//write operation
+					if(writeOperationsCompleted<noOfWriteOperations)
+					{
+
+						System.out.println("Write operation initiated");
+						write(fileId);
+						writeOperationsCompleted++;
+						operationsCompleted++;
+
+					}else
+					{
+						if(readOperationsCompleted<noOfReadOperations)
+						{
+							System.out.println("Read operation initiated");
+							read(fileId);
+							readOperationsCompleted++;
+							operationsCompleted++;
+						}
 					}
 				}
-			}
 
-			Thread.sleep(meanDelay);
+				Thread.sleep(meanDelay);
+			}
+		}catch(InterruptedException ex)
+		{
+			ex.printStackTrace();
 		}
-		
+
+
 		System.out.println("Node "+nodeId+" completed the process");
 
 	}

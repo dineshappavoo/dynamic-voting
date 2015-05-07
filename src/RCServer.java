@@ -7,7 +7,6 @@ import java.io.*;
 import java.net.*;
 
 import com.sun.nio.sctp.*;
-import com.sun.xml.internal.ws.api.message.Packet;
 
 import java.nio.*;
 import java.text.SimpleDateFormat;
@@ -185,6 +184,9 @@ public class RCServer extends DynamicVoting implements Runnable{
 					service.pushDataFromMemoryToFile(messageObj.getFileInfo().getFileId(), messageObj.getFileContent());
 					DynamicVoting.fileInfoMap.put(messageObj.getFileInfo().getFileId(), messageObj.getFileInfo());
 					DynamicVoting.isWaitingForUpdate = false;
+				}else if(messageObj.messageType.equals(MessageType.RESPONSE_LATEST_FILE_WRITE))
+				{
+					
 				}
 			}
 		}

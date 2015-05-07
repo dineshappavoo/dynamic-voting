@@ -2,7 +2,7 @@
 import subprocess, os
 
 def kill_after_terminate():
-    os.system('''pkill -f  "cd /home/004/d/dx/dxa132330/advanced-operating-system/projects/roucairol-carvalho;java RoucairolCarvalho"''')
+    os.system('''pkill -f  "cd /home/004/d/dx/dxa132330/advanced-operating-system/projects/dynamic-voting;java DynamicVoting"''')
 
 
 

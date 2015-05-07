@@ -24,8 +24,8 @@ public class DynamicVoting {
 	public static int nodeId;
 	public static String nodeName;
 	public static int nodePort;
-	public static boolean isReading;
-	public static Boolean isWriting;
+	public static boolean isReading = false;
+	public static Boolean isWriting = false;
 	public static int noOfFiles;
 	public static int noOfOperations;
 	public static int meanDelay;
@@ -59,9 +59,23 @@ public class DynamicVoting {
 
 	public void startServer()
 	{
+		filePath = "files/node"+nodeId+"/";
+		nodeName = nodeMap.get(nodeId).getHostName();
+		nodePort = nodeMap.get(nodeId).getHostPort();
+		
+		System.out.println("No Of Operations DV : "+noOfOperations);
 		new Thread(rCServer).start();
 		oService = new ServiceSimulation(nodeId, noOfOperations, meanDelay);
 		new Thread(oService).start();
+	}
+	
+	/**
+	 * Introduce failure
+	 */
+	public void introduceFailure()
+	{
+		int failureDuration = 10000;
+		//initiateFailure();
 	}
 
 	public void displayCSMessage(int nodeId)
@@ -131,28 +145,43 @@ public class DynamicVoting {
 						}
 					}
 				}
-			}
+				checker=scanner.next();
+				System.out.println("Checker :"+checker);
+				if(checker.equals("totalnooffiles") && (!(checker.equals("#"))))
+				{
+					noOfFiles = scanner.nextInt();
+				}
+				checker = scanner.next();
 
-			checker=scanner.next();
-			if(checker.equals("totalnooffiles") && (!(checker.equals("#"))))
-			{
-				noOfFiles = scanner.nextInt();
-			}else if(checker.equals("totalnoofoperations") && (!(checker.equals("#"))))
-			{
-				noOfOperations = scanner.nextInt();
-			}else if(checker.equals("meandelay") && (!(checker.equals("#"))))
-			{
-				meanDelay = scanner.nextInt();
-			}else if(checker.equals("fractionofoperations") && (!(checker.equals("#"))))
-			{
-				fractionOfOperations = scanner.nextInt();
-			}else if(checker.equals("min_backoff") && (!(checker.equals("#"))))
-			{
-				minBackOff = scanner.nextInt();
-			}else if(checker.equals("max_backoff") && (!(checker.equals("#"))))
-			{
-				maxBackOff = scanner.nextInt();
-			}
+				if(checker.equals("totalnoofoperations") && (!(checker.equals("#"))))
+				{
+					noOfOperations = scanner.nextInt();
+				}
+				checker=scanner.next();
+
+				if(checker.equals("meandelay") && (!(checker.equals("#"))))
+				{
+					meanDelay = scanner.nextInt();
+				}
+				checker=scanner.next();
+
+				if(checker.equals("fractionofoperations") && (!(checker.equals("#"))))
+				{
+					fractionOfOperations = scanner.nextInt();
+				}
+				checker=scanner.next();
+
+				if(checker.equals("min_backoff") && (!(checker.equals("#"))))
+				{
+					minBackOff = scanner.nextInt();
+				}
+				checker=scanner.next();
+
+				if(checker.equals("max_backoff") && (!(checker.equals("#"))))
+				{
+					maxBackOff = scanner.nextInt();
+				}
+			}		
 
 		}
 		printNodeMap();
@@ -174,15 +203,20 @@ public class DynamicVoting {
 			host = nodeMap.get(nodeId);
 			System.out.println("[INFO]	["+sTime()+"]	Host Id "+nodeId+"  Name : "+host.hostName+"  port : "+host.hostPort);
 		}
+		System.out.println("Number of operations : "+noOfOperations);
+		System.out.println("Number of files : "+noOfFiles);
+		System.out.println("Fraction of operations : "+fractionOfOperations);
+		System.out.println("Mean Delay : "+meanDelay);
+		System.out.println("Min Backoff : "+minBackOff);
+		System.out.println("Max Backoff : "+maxBackOff);
+
 	}
 
 	public void simulateDynamicVoting() throws FileNotFoundException
 	{
-		//HashMap<Integer, Host> nMap = constructGraph("/Users/Dany/Documents/FALL-2013-COURSES/Imp_Data_structures/workspace/roucairol-carvalho/src/config.txt", nodeId);
+		//HashMap<Integer, Host> nMap = constructGraph("/Users/Dany/Documents/FALL-2013-COURSES/Imp_Data_structures/workspace/dynamic-voting/src/config.txt", nodeId);
 		HashMap<Integer, Host> nMap = constructGraph("config.txt", nodeId);
-
-		//System.out.println("[INFO]	["+sTime()+"]	No Of CS : "+noOfCriticalSectionRequests+"  Mean Delay : "+meanDelayInCriticalSection+"  Duration Of CS : "+durationOfCriticalSection);
-		//startServer();
+		startServer();
 	}
 
 	/**
@@ -191,11 +225,10 @@ public class DynamicVoting {
 	 */
 	public static void main(String[] args) throws FileNotFoundException {
 		// TODO Auto-generated method stub
-
-		/*if(args.length > 0) {
+		if(args.length > 0) {
 			nodeId = Integer.parseInt(args[0]);
 		}
-		 */
+		 
 		DynamicVoting dvObject = new DynamicVoting();
 		dvObject.simulateDynamicVoting();
 	}
