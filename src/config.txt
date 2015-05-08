@@ -8,13 +8,13 @@
 # Number of nodes
 p 3    
     
-n   0               dc45        11079   
-n   1               dc25        11079
-n   2               dc26        11080
+n   0               dc27        11164   
+n   1               dc28        11165
+n   2               dc29        11166
 
 
-totalnooffiles 20
-totalnoofoperations 10       
+totalnooffiles 3
+totalnoofoperations 5       
 meandelay 50
 fractionofoperations 80
 min_backoff 16

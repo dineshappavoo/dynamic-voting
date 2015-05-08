@@ -25,7 +25,7 @@ public class ServiceSimulation implements Runnable{
 	/**
 	 * @param args
 	 */
-	public static String projectDir = "/home/eng/a/axt131730/AOS_Proj3/";
+	public static String projectDir = "/home/004/d/dx/dxa132330/advanced-operating-system/projects/dynamic-voting/";
 	public int nodeCount = 45;
 	public PrintWriter out;
 	public static Random rand;//= new Random();
@@ -104,26 +104,31 @@ public class ServiceSimulation implements Runnable{
 
 	public void initiateVoting()
 	{
-
 		int operationsCompleted = 0;
 		int readOperationsCompleted = 0;
 		int writeOperationsCompleted = 0;
+		
+		float percentage = ((float)DynamicVoting.fractionOfOperations / (float)100);
 
-		noOfReadOperations  = noOfOperations * (80/100);
+		noOfReadOperations  = (int) (((float)noOfOperations) * (percentage));
 		noOfWriteOperations = noOfOperations - noOfReadOperations;
+
 		int coinToss = 0;
 		int fileNumber;
 		String fileName = "";
 		String fileId = "";
 
 		System.out.println("INITIATED THE PROTOCOL");
-		System.out.println("Number of Operations : "+noOfOperations);
-		//noOfOperations = 10;
+		System.out.println("Number of Operations : "+noOfOperations);		
+		
+		System.out.println("Number of Read Operations : "+noOfReadOperations);
+		System.out.println("Number of Write Operations : "+noOfWriteOperations);
+
 		try {
 
 			while(operationsCompleted<noOfOperations)
 			{
-				fileNumber = randInt(1, 20);		
+				fileNumber = randInt(0, DynamicVoting.noOfFiles-1);		
 				fileId="file"+fileNumber;
 
 				coinToss = randInt(0, 1);
@@ -370,9 +375,9 @@ public class ServiceSimulation implements Runnable{
 
 	public static byte[] convertToByteArray(String filename,String filepath) 
 	{
-
+		filepath = filepath;
 		FileInputStream fis=null;
-		File file = new File(filepath+filename);
+		File file = new File(filepath+filename+ ".txt");
 		byte[] byteArray = new byte[(int) file.length()];
 		try {
 			fis = new FileInputStream(file);
@@ -394,6 +399,7 @@ public class ServiceSimulation implements Runnable{
 	{
 		if(isRead)
 		{
+			//System.out.println("File Id : "+fileId);
 			for(HashMap<String, FileInfo> file : DynamicVoting.readLockGranted.values())
 			{
 				if(file.get(fileId).isLock())
@@ -443,8 +449,9 @@ public class ServiceSimulation implements Runnable{
 					{
 						//TODO: SET TIMESTAMPS
 						Message msgObj = new Message(null,null,MessageType.REQUEST_READ_LOCK, null,DynamicVoting.nodeMap.get(DynamicVoting.nodeId),
-								DynamicVoting.fileInfoMap.get(fileId), null);
+						DynamicVoting.fileInfoMap.get(fileId), null);
 						Host destination = DynamicVoting.nodeMap.get(id);
+						System.out.println("Read Dest Host name :"+destination.hostName+" Host port : "+destination.hostPort);
 						RCClient rcClient = new RCClient(destination, msgObj);
 						rcClient.go();
 					}
@@ -455,6 +462,7 @@ public class ServiceSimulation implements Runnable{
 					e.printStackTrace();
 				}
 
+				System.out.println("Requested nodes to get the quorum for read");
 				DynamicVoting.timerOff = Boolean.TRUE;
 				ArrayList<Integer> pList = new ArrayList<Integer>();
 				ArrayList<Integer> quorumList = new ArrayList<Integer>();
@@ -524,8 +532,10 @@ public class ServiceSimulation implements Runnable{
 
 		while(DynamicVoting.isWaitingForUpdate);
 		readOp(DynamicVoting.filePath+fileId);
+		
 		DynamicVoting.requestCompleted=true;
 		releaseLock(true, fileId);
+		System.out.println("Completed the read Operation");
 	}
 
 
@@ -646,7 +656,7 @@ public class ServiceSimulation implements Runnable{
 		}
 
 		while(DynamicVoting.isWaitingForUpdate);
-		writeOp(DynamicVoting.filePath+fileId+".txt");
+		writeOp(DynamicVoting.filePath+fileId);
 		DynamicVoting.requestCompleted=true;
 		releaseLock(false, fileId);
 		DynamicVoting.isWriting = false;
@@ -656,6 +666,9 @@ public class ServiceSimulation implements Runnable{
 
 	public void readOp(String fileId)
 	{
+		System.out.println("got the quorum for read and gonna perform read");
+		System.out.println("File id : "+fileId);
+		fileId = fileId+".txt";
 		Scanner scanner = null;
 		try
 		{
@@ -664,6 +677,8 @@ public class ServiceSimulation implements Runnable{
 			//Read file
 			while(scanner.hasNext())
 			{
+				//System.out.println("Test Read");
+				scanner.nextLine();
 				Thread.sleep(10);
 			}
 
@@ -677,10 +692,14 @@ public class ServiceSimulation implements Runnable{
 				scanner.close();
 			}
 		}
+		
+		System.out.println("Read completed");
+
 	}
 
 	public void writeOp(String fileId)
 	{
+		fileId = fileId+".txt";
 		PrintWriter pw = null;
 		try {
 			pw = new PrintWriter(fileId);
@@ -699,6 +718,7 @@ public class ServiceSimulation implements Runnable{
 
 	public void run()
 	{
+		createFiles(DynamicVoting.noOfFiles);
 		initiateVoting();
 	}
 
