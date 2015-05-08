@@ -50,6 +50,7 @@ public class DynamicVoting {
 	public static boolean isWaitingForLock = false;
 	public static PriorityQueue<Message> minHeap = getPriorityQueue();
 	public static AtomicInteger currentNodeTimestamp = new AtomicInteger(0);
+	public static AtomicInteger[]  vectorTimeStamp;
 	public static int count = 0;
 	public static Boolean timerOff;
 	public static boolean isWaitingForUpdate = false;
@@ -169,6 +170,7 @@ public class DynamicVoting {
 			if((checker=scanner.next()).equals("p") && (!(checker.equals("#"))))
 			{
 				noOfNodes=scanner.nextInt();
+				vectorTimeStamp = new AtomicInteger[noOfNodes];
 				//To add the node information from config file [FORMAT : n  0	dc01		3332]
 				for(int j=0;j<noOfNodes;j++)
 				{

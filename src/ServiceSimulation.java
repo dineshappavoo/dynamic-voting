@@ -227,8 +227,9 @@ public class ServiceSimulation implements Runnable{
 		Host destination = new Host(node_id,DynamicVoting.nodeMap.get(node_id).getHostName(),DynamicVoting.nodeMap.get(node_id).getHostPort());
 
 		// Increment logical timestamp
-
+		DynamicVoting.currentNodeTimestamp.incrementAndGet();
 		// Increment vector timestamp
+		DynamicVoting.vectorTimeStamp[DynamicVoting.nodeId].incrementAndGet();
 
 		Message msgObj = new Message();
 		msgObj.setNodeInfo(source);
@@ -242,7 +243,8 @@ public class ServiceSimulation implements Runnable{
 			msgObj.setMessageType(MessageType.RESPONSE_WRITE);
 		}
 		msgObj.setStatus(Status.GRANT);
-		//TODO: SET TIMESTAMPS - LOGICAL AND VECTOR
+		msgObj.setLogicalTimeStamp(DynamicVoting.currentNodeTimestamp);
+		msgObj.setVectorTimestamp(DynamicVoting.vectorTimeStamp);
 
 		//Client for sending message
 		RCClient rcClient = new RCClient(destination, msgObj);
@@ -264,8 +266,11 @@ public class ServiceSimulation implements Runnable{
 					{
 						Host destination = DynamicVoting.nodeMap.get(nodeEntry.getKey());
 
-						//TODO: Update timestamps
-						Message msgObj = new Message(null,null,MessageType.RELEASE_READ_LOCK, null,DynamicVoting.nodeMap.get(DynamicVoting.nodeId),
+						//// Increment logical timestamp
+						DynamicVoting.currentNodeTimestamp.incrementAndGet();
+						// Increment vector timestamp
+						DynamicVoting.vectorTimeStamp[DynamicVoting.nodeId].incrementAndGet();
+						Message msgObj = new Message(DynamicVoting.currentNodeTimestamp,DynamicVoting.vectorTimeStamp,MessageType.RELEASE_READ_LOCK, null,DynamicVoting.nodeMap.get(DynamicVoting.nodeId),
 								nodeEntry.getValue().get(fileId), null);
 						RCClient rcClient = new RCClient(destination, msgObj);
 						rcClient.go();
@@ -285,8 +290,11 @@ public class ServiceSimulation implements Runnable{
 					{
 						Host destination = DynamicVoting.nodeMap.get(nodeEntry.getKey());
 
-						//TODO: Update timestamps and set in Message
-						Message msgObj = new Message(null,null,MessageType.RELEASE_WRITE_LOCK, null,DynamicVoting.nodeMap.get(DynamicVoting.nodeId),
+						// Increment logical timestamp
+						DynamicVoting.currentNodeTimestamp.incrementAndGet();
+						// Increment vector timestamp
+						DynamicVoting.vectorTimeStamp[DynamicVoting.nodeId].incrementAndGet();
+						Message msgObj = new Message(DynamicVoting.currentNodeTimestamp, DynamicVoting.vectorTimeStamp,MessageType.RELEASE_WRITE_LOCK, null,DynamicVoting.nodeMap.get(DynamicVoting.nodeId),
 								nodeEntry.getValue().get(fileId), null);
 						RCClient rcClient = new RCClient(destination, msgObj);
 						rcClient.go();
@@ -303,16 +311,20 @@ public class ServiceSimulation implements Runnable{
 		Message msgObj;
 		FileInfo fileInfo = new FileInfo();
 		fileInfo.setFileId(fileId);
+		// Increment logical timestamp
+		DynamicVoting.currentNodeTimestamp.incrementAndGet();
+		// Increment vector timestamp
+		DynamicVoting.vectorTimeStamp[DynamicVoting.nodeId].incrementAndGet();
 		if(isRead)
 		{
 			//TODO: Update timestamps and set in Message
-			msgObj = new Message(null,null,MessageType.RESPONSE_READ, Status.DENY,DynamicVoting.nodeMap.get(DynamicVoting.nodeId),
+			msgObj = new Message(DynamicVoting.currentNodeTimestamp,DynamicVoting.vectorTimeStamp,MessageType.RESPONSE_READ, Status.DENY,DynamicVoting.nodeMap.get(DynamicVoting.nodeId),
 					fileInfo, null);
 		}
 		else 
 		{
 			//TODO: Update timestamps and set in Message
-			msgObj = new Message(null,null,MessageType.RESPONSE_WRITE, Status.DENY,DynamicVoting.nodeMap.get(DynamicVoting.nodeId),
+			msgObj = new Message(DynamicVoting.currentNodeTimestamp, DynamicVoting.vectorTimeStamp,MessageType.RESPONSE_WRITE, Status.DENY,DynamicVoting.nodeMap.get(DynamicVoting.nodeId),
 					fileInfo, null);
 		}
 		Host destination = DynamicVoting.nodeMap.get(node_id);
@@ -328,16 +340,20 @@ public class ServiceSimulation implements Runnable{
 		Message msgObj;
 		FileInfo fileInfo = new FileInfo();
 		fileInfo.setFileId(fileId);
+		// Increment logical timestamp
+		DynamicVoting.currentNodeTimestamp.incrementAndGet();
+		// Increment vector timestamp
+		DynamicVoting.vectorTimeStamp[DynamicVoting.nodeId].incrementAndGet();
 		if(isRead)
 		{
 			//TODO: Update timestamps and set in Message
-			msgObj = new Message(null,null,MessageType.REQUEST_LATEST_FILE_READ, null,DynamicVoting.nodeMap.get(DynamicVoting.nodeId),
+			msgObj = new Message(DynamicVoting.currentNodeTimestamp,DynamicVoting.vectorTimeStamp,MessageType.REQUEST_LATEST_FILE_READ, null,DynamicVoting.nodeMap.get(DynamicVoting.nodeId),
 					fileInfo, null);
 		}
 		else 
 		{
 			//TODO: Update timestamps and set in Message
-			msgObj = new Message(null,null,MessageType.REQUEST_LATEST_FILE_WRITE, null,DynamicVoting.nodeMap.get(DynamicVoting.nodeId),
+			msgObj = new Message(DynamicVoting.currentNodeTimestamp, DynamicVoting.vectorTimeStamp,MessageType.REQUEST_LATEST_FILE_WRITE, null,DynamicVoting.nodeMap.get(DynamicVoting.nodeId),
 					fileInfo, null);
 		}
 		Host destination = DynamicVoting.nodeMap.get(node_id);
@@ -355,16 +371,16 @@ public class ServiceSimulation implements Runnable{
 
 		Message msgObj;
 		byte[] fileContent =convertToByteArray(fileId,DynamicVoting.filePath);
+		DynamicVoting.currentNodeTimestamp.incrementAndGet();
+		DynamicVoting.vectorTimeStamp[DynamicVoting.nodeId].incrementAndGet();
 		if(isRead)
 		{
-			//TODO: Update timestamps and set in Message
-			msgObj = new Message(null,null,MessageType.RESPONSE_LATEST_FILE_READ, null,DynamicVoting.nodeMap.get(DynamicVoting.nodeId),
+			msgObj = new Message(DynamicVoting.currentNodeTimestamp,DynamicVoting.vectorTimeStamp,MessageType.RESPONSE_LATEST_FILE_READ, null,DynamicVoting.nodeMap.get(DynamicVoting.nodeId),
 					DynamicVoting.fileInfoMap.get(fileId), fileContent);
 		}
 		else 
 		{
-			//TODO: Update timestamps and set in Message
-			msgObj = new Message(null,null,MessageType.RESPONSE_LATEST_FILE_WRITE, null,DynamicVoting.nodeMap.get(DynamicVoting.nodeId),
+			msgObj = new Message(DynamicVoting.currentNodeTimestamp,DynamicVoting.vectorTimeStamp,MessageType.RESPONSE_LATEST_FILE_WRITE, null,DynamicVoting.nodeMap.get(DynamicVoting.nodeId),
 					DynamicVoting.fileInfoMap.get(fileId), fileContent);
 		}
 		Host destination = DynamicVoting.nodeMap.get(node_id);
@@ -448,8 +464,9 @@ public class ServiceSimulation implements Runnable{
 					if(id != DynamicVoting.nodeId)
 					{
 						//TODO: SET TIMESTAMPS
-						Message msgObj = new Message(null,null,MessageType.REQUEST_READ_LOCK, null,DynamicVoting.nodeMap.get(DynamicVoting.nodeId),
+						Message msgObj = new Message(DynamicVoting.currentNodeTimestamp,DynamicVoting.vectorTimeStamp,MessageType.REQUEST_READ_LOCK, null,DynamicVoting.nodeMap.get(DynamicVoting.nodeId),
 						DynamicVoting.fileInfoMap.get(fileId), null);
+						
 						Host destination = DynamicVoting.nodeMap.get(id);
 						System.out.println("Read Dest Host name :"+destination.hostName+" Host port : "+destination.hostPort);
 						RCClient rcClient = new RCClient(destination, msgObj);
@@ -564,7 +581,7 @@ public class ServiceSimulation implements Runnable{
 					if(id != DynamicVoting.nodeId)
 					{
 						//TODO: SET TIMESTAMPS
-						Message msgObj = new Message(null,null,MessageType.REQUEST_WRITE_LOCK, null,DynamicVoting.nodeMap.get(DynamicVoting.nodeId),
+						Message msgObj = new Message(DynamicVoting.currentNodeTimestamp,DynamicVoting.vectorTimeStamp,MessageType.REQUEST_WRITE_LOCK, null,DynamicVoting.nodeMap.get(DynamicVoting.nodeId),
 								DynamicVoting.fileInfoMap.get(fileId), null);
 						Host destination = DynamicVoting.nodeMap.get(id);
 						RCClient rcClient = new RCClient(destination, msgObj);
@@ -635,7 +652,6 @@ public class ServiceSimulation implements Runnable{
 
 					for (int i = 0; i < pList.size(); i++) 
 					{
-
 						sendUpdatedFileVersion(pList.get(i), false, fileId);
 					}
 					DynamicVoting.requestCompleted = false;

@@ -66,6 +66,21 @@ public class RCServer extends DynamicVoting implements Runnable{
 				ByteArrayInputStream in = new ByteArrayInputStream(byteBuffer.array());
 				ObjectInputStream os = new ObjectInputStream(in);
 				Message messageObj = (Message) os.readObject();
+				DynamicVoting.currentNodeTimestamp = new AtomicInteger(Math.max(messageObj.getLogicalTimeStamp().intValue(), DynamicVoting.currentNodeTimestamp.intValue()) + 1);
+				
+				// Increment vector timestamp (max)
+				for (int i = 0; i < DynamicVoting.vectorTimeStamp.length; i++) 
+				{
+					if(DynamicVoting.nodeId==i)
+					{
+						DynamicVoting.vectorTimeStamp[i] = new AtomicInteger(Math.max(messageObj.vectorTimestamp[i].intValue(), DynamicVoting.vectorTimeStamp[i].intValue()) + 1);
+					}
+					else
+					{
+						DynamicVoting.vectorTimeStamp[i] = new AtomicInteger(Math.max(messageObj.vectorTimestamp[i].intValue(), DynamicVoting.vectorTimeStamp[i].intValue()));
+					}				
+				}
+				
 				int hostId = messageObj.getNodeInfo().getHostId();
 				String fileId = messageObj.getFileInfo().getFileId();
 				if(messageObj.messageType.equals(MessageType.REQUEST_READ_LOCK))
