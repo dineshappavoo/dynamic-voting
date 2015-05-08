@@ -11,11 +11,14 @@ import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Random;
 import java.util.Scanner;
 import java.util.Map.Entry;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.logging.Logger;
 /**
  * @author Dany
  *
@@ -25,23 +28,24 @@ public class ServiceSimulation implements Runnable{
 	/**
 	 * @param args
 	 */
-	public static String projectDir = "/home/004/d/dx/dxa132330/advanced-operating-system/projects/dynamic-voting/";
+	public static String projectDir = "/home/eng/a/axt131730/AOS_Proj3";
 	public int nodeCount = 45;
 	public PrintWriter out;
 	public static Random rand;//= new Random();
 	static int noOfOperations;
 	static int meanDelay;
-
+	public Logger logger;
 	static int noOfReadOperations;
 	static int noOfWriteOperations;
 	private static int nodeId;
 
 
-	public ServiceSimulation(int nodeId, int noOfOperations, int meanDelay)
+	public ServiceSimulation(int nodeId, int noOfOperations, int meanDelay, Logger logger)
 	{
 		this.noOfOperations = noOfOperations;
 		this.nodeId = nodeId;
 		this.meanDelay = meanDelay;
+		this.logger = logger;
 	}
 
 	public ServiceSimulation()
@@ -75,7 +79,7 @@ public class ServiceSimulation implements Runnable{
 	{
 		String fileDir = projectDir+"files";
 
-		for(int i=1;i<=nodeCount;i++)
+		for(int i=0;i<nodeCount;i++)
 		{
 			for(int j=0;j<noOfFiles;j++)
 			{
@@ -440,7 +444,7 @@ public class ServiceSimulation implements Runnable{
 
 
 
-	public void read(String fileId)
+	public void read(String fileId) throws InterruptedException
 	{
 
 		int currentTimer = DynamicVoting.minBackOff;
@@ -469,6 +473,9 @@ public class ServiceSimulation implements Runnable{
 								DynamicVoting.fileInfoMap.get(fileId), null);
 
 						Host destination = DynamicVoting.nodeMap.get(id);
+						if(destination ==null){
+							System.out.println("DEst*************************"+id);
+						}
 						System.out.println("Read Dest Host name :"+destination.hostName+" Host port : "+destination.hostPort);
 						RCClient rcClient = new RCClient(destination, msgObj);
 						rcClient.go();
@@ -560,7 +567,7 @@ public class ServiceSimulation implements Runnable{
 	}
 
 
-	public void write(String fileId)
+	public void write(String fileId) throws InterruptedException
 	{
 
 		int currentTimer = DynamicVoting.minBackOff;
@@ -589,6 +596,9 @@ public class ServiceSimulation implements Runnable{
 						Message msgObj = new Message(DynamicVoting.currentNodeTimestamp,DynamicVoting.vectorTimeStamp,MessageType.REQUEST_WRITE_LOCK, null,DynamicVoting.nodeMap.get(DynamicVoting.nodeId),
 								DynamicVoting.fileInfoMap.get(fileId), null);
 						Host destination = DynamicVoting.nodeMap.get(id);
+						if(destination ==null){
+							System.out.println("DEst*************************"+id);
+						}
 						RCClient rcClient = new RCClient(destination, msgObj);
 						rcClient.go();
 					}
@@ -693,6 +703,14 @@ public class ServiceSimulation implements Runnable{
 		System.out.println("got the quorum for read and gonna perform read");
 		System.out.println("File id : "+fileId);
 		fileId = fileId+".txt";
+		AtomicInteger[] timeStamp = DynamicVoting.vectorTimeStamp;
+		String s = "[";
+		for(AtomicInteger i : timeStamp){
+			s+=i+",";
+		}
+		s = s.substring(0,s.length()-1);
+		s+="]";
+		logger.info(fileId+"~"+nodeId+"#R#E#"+s);
 		Scanner scanner = null;
 		try
 		{
@@ -716,7 +734,14 @@ public class ServiceSimulation implements Runnable{
 				scanner.close();
 			}
 		}
-
+		timeStamp = DynamicVoting.vectorTimeStamp;
+		String s1 = "[";
+		for(AtomicInteger i : timeStamp){
+			s1+=i+",";
+		}
+		s1 = s1.substring(0,s1.length()-1);
+		s1+="]";
+		logger.info(fileId+"~"+nodeId+"#R#L#"+s1);
 		System.out.println("Read completed");
 
 	}
@@ -724,6 +749,14 @@ public class ServiceSimulation implements Runnable{
 	public void writeOp(String fileId)
 	{
 		fileId = fileId+".txt";
+		AtomicInteger[] timeStamp = DynamicVoting.vectorTimeStamp;
+		String s = "[";
+		for(AtomicInteger i : timeStamp){
+			s+=i+",";
+		}
+		s = s.substring(0,s.length()-1);
+		s+="]";
+		logger.info(fileId+"~"+nodeId+"#W#E#"+s);
 		PrintWriter pw = null;
 		try {
 			pw = new PrintWriter(fileId);
@@ -732,6 +765,14 @@ public class ServiceSimulation implements Runnable{
 		} catch (IOException e) {
 			e.printStackTrace();
 		}finally{
+			timeStamp = DynamicVoting.vectorTimeStamp;
+			String s1 = "[";
+			for(AtomicInteger i : timeStamp){
+				s1+=i+",";
+			}
+			s1 = s1.substring(0,s1.length()-1);
+			s1+="]";
+			logger.info(fileId+"~"+nodeId+"#W#L#"+s1);
 			if(pw != null){
 				//Close resource file
 				pw.close();

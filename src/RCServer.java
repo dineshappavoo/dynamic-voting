@@ -18,15 +18,18 @@ import java.util.LinkedList;
 import java.util.PriorityQueue;
 import java.util.Queue;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.logging.Logger;
 public class RCServer extends DynamicVoting implements Runnable{
 	public static final int MESSAGE_SIZE = 1000;
 	public static boolean hasAllTerminated = false;
+	public Logger logger;
 	//private HashMap<Integer, Host> nodeMap;
 	//private int nodeId;
 	//private int nWaitingForTerminationResponseCount;
 
-	public RCServer()
+	public RCServer(Logger logger)
 	{
+		this.logger = logger;
 		//this.nodeMap = nodeMap; 
 		//this.nodeId = nodeId;
 		//this.nWaitingForTerminationResponseCount = nWaitingForTerminationResponseCount;

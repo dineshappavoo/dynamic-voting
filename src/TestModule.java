@@ -1,116 +1,115 @@
+import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileNotFoundException;
+import java.io.FileReader;
+import java.io.IOException;
+import java.util.HashMap;
+import java.util.LinkedList;
+import java.util.List;
 import java.util.Map;
-import java.util.Scanner;
-import java.util.TreeMap;
+import java.util.Map.Entry;
 
-/**
- * 
- */
 
-/**
- * @author Rahul
- *
- */
 public class TestModule {
 
-	/**
-	 * @param args
-	 * @throws FileNotFoundException 
-	 */
-	public static void main(String[] args) {
-
-		try 
-		{
-			TreeMap<Long, String> treeMap = new TreeMap<Long, String>();
-			File file = new File("config.txt");
-			Scanner scanner_1=new Scanner(file);
-			int noOfNodes = 0;
-			String current ="";
-			//Read number of nodes from config file
-			while(scanner_1.hasNext())
-			{
-				if((current=scanner_1.next()).equals("p") && (!(current.equals("#"))))
-				{
-					noOfNodes=scanner_1.nextInt();
-					break;
-				}
-			}
-
-			scanner_1.close();
-			int i=0;
-			//Read through all the log files and put the lines in a TreeMap with the timestamp as key
-			while(i<noOfNodes)
-			{
-				File logFile = new File("node"+i+".log");
-				Scanner scanner_2 =null;
-				try {
-					scanner_2 = new Scanner(logFile);
-
-					while(scanner_2.hasNext())
-					{
-						String currentLine = scanner_2.next();
-						String[] keyValue = currentLine.split(":");
-						treeMap.put(Long.valueOf(keyValue[0]), keyValue[1]);
-					}
-				} catch (FileNotFoundException e) {
-					e.printStackTrace();
-				} finally {
-					if(scanner_2 != null)
-					{
-						scanner_2.close();
+	public List<String> listLogFilesForFolder(File folder) {
+		List<String> logFiles = new LinkedList<String>();
+	    for (final File fileEntry : folder.listFiles()) {
+	        if (fileEntry.isDirectory()) {
+	            continue;
+	        } else if(fileEntry.getName().startsWith("log.txt")){
+	           logFiles.add(fileEntry.getAbsolutePath());
+	        }
+	    }
+		return logFiles;
+	}
+	
+	public void test() throws IOException{
+		
+		File folder = new File("/home/eng/a/axt131730/AOS_Proj3");
+		List<String> logFiles = listLogFilesForFolder(folder);
+		Map<String,List<String>> vectorTimeStampMaps = new HashMap<String, List<String>>();
+		for(String filePath : logFiles){
+			BufferedReader br = new BufferedReader(new FileReader(new File(filePath)));
+			String line = "";
+			while((line=br.readLine())!=null){
+				if(line.startsWith("INFO")){
+					String[] parts = line.split(":");
+					String[] subparts = parts[1].split("~");
+					if(vectorTimeStampMaps.containsKey(subparts[0])){
+						vectorTimeStampMaps.get(subparts[0]).add(subparts[1]);
+					}else{
+						List<String> values = new LinkedList<String>();
+						values.add(subparts[1]);
+						vectorTimeStampMaps.put(subparts[0],values);
 					}
 				}
-				i++;
-
 			}
-			String prevValue = null;
-			/**
-			 * TreeMap sorts the entries based on the keys.
-			 * Check if there are overlapping start and end pairs.
-			 * If there are overlapping pairs, then there has been a violation of the protocol.
-			 */
-
-			int j=1;
-			//treeMap.values() will give the values in ascending order of the keys (from Javadoc).
-			for(String value : treeMap.values())
-			{
-				String[] currentValues;
-				if(prevValue != null && j%2==0)
-				{
-					currentValues = value.split("-");
-					String[] previous = prevValue.split("-");
-					if(previous[0].equals(currentValues[0]) )
-					{
-						if(previous[1].equalsIgnoreCase("Start") 
-								&& currentValues[1].equalsIgnoreCase("End"))
-						{
-							prevValue = null;
-							j++;
-							continue;
+			br.close();
+		}
+		
+		boolean hasConflict = false;
+		for(Entry<String,List<String>> entry : vectorTimeStampMaps.entrySet()){
+			List<String> values = entry.getValue();
+			for(int i =0; i<values.size();i++){
+				String value = values.get(i);
+				for(int j=i ;j<values.size(); j++){
+					String comparable = values.get(j);
+					if(value.contains("R#L")){
+						if(comparable.contains("W#E")){
+							String[] subvalues = value.split("#");
+							String[] comValues = comparable.split("#");
+							if(compare(subvalues[3], comValues[3])){
+								hasConflict = true;
+							}
 						}
 					}
-					else if ((previous[1].equalsIgnoreCase("Start") 
-							&& currentValues[1].equalsIgnoreCase("Start")) || (previous[1].equalsIgnoreCase("End") 
-									&& currentValues[1].equalsIgnoreCase("End"))) 
-					{
-						System.out.println("Yes, one or more violations found!");
-						return;
-					}
-					else if (previous[1].equalsIgnoreCase("Start") 
-							&& currentValues[1].equalsIgnoreCase("End"))
-					{
-						System.out.println("Yes, one or more violations found!");
-						return;
-					}
+						
 				}
-				prevValue = value;
-				j++;
 			}
-			System.out.println("No violations found!");
-		} catch(Exception e)
-		{
-			e.printStackTrace();
+			for(int i =0; i<values.size();i++){
+				String value = values.get(i);
+				for(int j=i ;j<values.size(); j++){
+					String comparable = values.get(j);
+					if(value.contains("W#L")){
+						if(comparable.contains("R#E") || comparable.contains("W#E")  ){
+							String[] subvalues = value.split("#");
+							String[] comValues = comparable.split("#");
+							if(compare(subvalues[3], comValues[3])){
+								hasConflict = true;
+							}
+						}
+					}
+						
+				}
+			}
+			
+		}
+		if(hasConflict){
+			System.out.println("There was a conflict");
+		}else{
+			System.out.println("No conflict found");
 		}
 	}
+
+	private boolean compare(String string1, String string2) {
+		string1 = string1.substring(1,string1.length()-1);
+		string2 = string2.substring(1,string2.length()-1);
+		String[]strings_1 = string1.split(",");
+		String[]strings_2 = string2.split(",");
+		for(int i=0 ; i< strings_1.length ;i++){
+			int val1 = Integer.parseInt(strings_1[i].trim());
+			int val2 = Integer.parseInt(strings_2[i].trim());
+			if(val1 > val2){
+				return true;
+			}
+		}
+		return false;
+	}
+	
+	public static void main(String[] args) throws IOException{
+		TestModule testModule = new TestModule();
+		testModule.test();
+	}
+	
 }

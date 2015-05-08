@@ -5,6 +5,7 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.text.SimpleDateFormat;
+import java.util.Arrays;
 import java.util.Calendar;
 import java.util.Comparator;
 import java.util.HashMap;
@@ -13,6 +14,9 @@ import java.util.Random;
 import java.util.Scanner;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.logging.FileHandler;
+import java.util.logging.Logger;
+import java.util.logging.SimpleFormatter;
 
 /**
  * @author Dany
@@ -52,13 +56,13 @@ public class DynamicVoting {
 	public static AtomicInteger currentNodeTimestamp = new AtomicInteger(0);
 	public static AtomicInteger[]  vectorTimeStamp;
 	public static int count = 0;
-	public static Boolean timerOff;
+	public static Boolean timerOff=true;
 	public static boolean isWaitingForUpdate = false;
-	public static RCServer rCServer = new RCServer();
+	public static RCServer rCServer;
 	public ServiceSimulation oService;
 	public PrintWriter out;
 
-	public void startServer()
+	public void startServer(Logger logger)
 	{
 		filePath = "files/node"+nodeId+"/";
 		nodeName = nodeMap.get(nodeId).getHostName();
@@ -66,8 +70,9 @@ public class DynamicVoting {
 		initializeNodeData();
 		
 		System.out.println("No Of Operations DV : "+noOfOperations);
+		rCServer = new RCServer(logger);
 		new Thread(rCServer).start();
-		oService = new ServiceSimulation(nodeId, noOfOperations, meanDelay);
+		oService = new ServiceSimulation(nodeId, noOfOperations, meanDelay,logger);
 		new Thread(oService).start();
 	}
 	
@@ -157,8 +162,10 @@ public class DynamicVoting {
 
 	public HashMap<Integer, Host> constructGraph(String fileName, int nodeId) throws FileNotFoundException
 	{
+		
 		nodeMap = new HashMap<Integer, Host>();
 		File file = new File(fileName);
+		System.out.println("File path: " + file.getAbsolutePath());
 		Scanner scanner=new Scanner(file);
 		int hostId, hostPort;
 		String hostName="";
@@ -171,6 +178,7 @@ public class DynamicVoting {
 			{
 				noOfNodes=scanner.nextInt();
 				vectorTimeStamp = new AtomicInteger[noOfNodes];
+				Arrays.fill(vectorTimeStamp, new AtomicInteger(0));
 				//To add the node information from config file [FORMAT : n  0	dc01		3332]
 				for(int j=0;j<noOfNodes;j++)
 				{
@@ -252,11 +260,11 @@ public class DynamicVoting {
 
 	}
 
-	public void simulateDynamicVoting() throws FileNotFoundException
+	public void simulateDynamicVoting(Logger logger) throws FileNotFoundException
 	{
 		//HashMap<Integer, Host> nMap = constructGraph("/Users/Dany/Documents/FALL-2013-COURSES/Imp_Data_structures/workspace/dynamic-voting/src/config.txt", nodeId);
 		HashMap<Integer, Host> nMap = constructGraph("config.txt", nodeId);
-		startServer();
+		startServer(logger);
 	}
 
 	/**
@@ -268,9 +276,25 @@ public class DynamicVoting {
 		if(args.length > 0) {
 			nodeId = Integer.parseInt(args[0]);
 		}
-		 
+		Logger logger = Logger.getLogger("MyLog");  
+	    FileHandler fh;  
+
+	    try {  
+
+	        // This block configure the logger with handler and formatter  
+	        fh = new FileHandler("log.txt");  
+	        logger.addHandler(fh);
+	        SimpleFormatter formatter = new SimpleFormatter();  
+	        fh.setFormatter(formatter);  
+
+	    } catch (SecurityException e) {  
+	        e.printStackTrace();  
+	    } catch (IOException e) {  
+	        e.printStackTrace();  
+	    }  
+
 		DynamicVoting dvObject = new DynamicVoting();
-		dvObject.simulateDynamicVoting();
+		dvObject.simulateDynamicVoting(logger);
 	}
 
 }
