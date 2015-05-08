@@ -7,6 +7,7 @@ netid=dxa132330
 #
 # Root directory of your project
 PROJDIR=$HOME/advanced-operating-system/projects/dynamic-voting
+#PROJDIR=$HOME/Documents/FALL-2013-COURSES/Imp_Data_structures/workspace/node-discovery/src
 
 #
 # This assumes your config file is named "config.txt"
@@ -22,55 +23,28 @@ BINDIR=$PROJDIR
 #
 # Your main project class
 #
-PROG=DynamicVoting
+PROG=Fileread
 
-x=0
+n=0
 
-head -n 24 $CONFIG | tail -n $((24-15+1)) | sed -e "s/#.*//" | sed -e "/^\s*$/d" |
+cat $CONFIG | sed -e "s/#.*//" | sed -e "/^\s*$/d" | grep "n"
 (
+    #read i
+    #echo $i
     while read line 
     do
-        host=$( echo $line | awk '{ print $2 }' )
-		host_name="dc"$host
-		#echo $netid@$host.utdallas.edu java $BINDIR/$PROG $x &		
-        #ssh $netid@$host.utdallas.edu java $BINDIR/$PROG $x &
+        host=$( echo $line | awk '{ print $3 }' )
+        #nodeId=$( echo $line | awk '{ print $2 }' )
 
+        domain=".utdallas.edu"
+        machine=$host$domain
 		
-		echo ssh -l $netid $host_name.utdallas.edu "killall java" &
-		ssh -l $netid $host_name.utdallas.edu "killall java" &
-		
-        x=$(( x + 1 ))
+		echo ssh -l $netid $machine "killall java" &
+		ssh -l $netid $machine "killall java" &
+
+        n=$(( n + 1 ))
     done
-   
-)
-
-
-cat $CONFIG | sed -e "s/#.*//" | sed -e "/^\s*$/d" | grep "n" |
-(
-#read i
-#echo $i
-while read line
-do
-host=$( echo $line | awk '{ print $3 }' )
-nodeId=$( echo $line | awk '{ print $2 }' )
-
-domain=".utdallas.edu"
-machine=$host$domain
-val=$netid@$host$domain
-echo $val
-echo $nodeId
-
-#ssh $val java $PROJDIR NodeDiscovery $nodeId &
-
-ssh -q -o StrictHostKeyChecking=no -l "$netid" "$machine" "cd $PROJDIR;java DynamicVoting $nodeId" &
-
-#cmd="ssh $val java $PROJDIR NodeDiscovery $nodeId &"
-#echo $cmd
-#cmd
-
-n=$(( n + 1 ))
-done
-
+ 
 )
 
 

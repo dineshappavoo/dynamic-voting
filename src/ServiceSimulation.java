@@ -107,7 +107,7 @@ public class ServiceSimulation implements Runnable{
 		int operationsCompleted = 0;
 		int readOperationsCompleted = 0;
 		int writeOperationsCompleted = 0;
-		
+
 		float percentage = ((float)DynamicVoting.fractionOfOperations / (float)100);
 
 		noOfReadOperations  = (int) (((float)noOfOperations) * (percentage));
@@ -120,7 +120,7 @@ public class ServiceSimulation implements Runnable{
 
 		System.out.println("INITIATED THE PROTOCOL");
 		System.out.println("Number of Operations : "+noOfOperations);		
-		
+
 		System.out.println("Number of Read Operations : "+noOfReadOperations);
 		System.out.println("Number of Write Operations : "+noOfWriteOperations);
 
@@ -443,6 +443,7 @@ public class ServiceSimulation implements Runnable{
 	public void read(String fileId)
 	{
 
+		int currentTimer = DynamicVoting.minBackOff;
 		while(true)
 		{
 			if(!DynamicVoting.isWriting)
@@ -465,8 +466,8 @@ public class ServiceSimulation implements Runnable{
 					{
 						//TODO: SET TIMESTAMPS
 						Message msgObj = new Message(DynamicVoting.currentNodeTimestamp,DynamicVoting.vectorTimeStamp,MessageType.REQUEST_READ_LOCK, null,DynamicVoting.nodeMap.get(DynamicVoting.nodeId),
-						DynamicVoting.fileInfoMap.get(fileId), null);
-						
+								DynamicVoting.fileInfoMap.get(fileId), null);
+
 						Host destination = DynamicVoting.nodeMap.get(id);
 						System.out.println("Read Dest Host name :"+destination.hostName+" Host port : "+destination.hostPort);
 						RCClient rcClient = new RCClient(destination, msgObj);
@@ -525,7 +526,10 @@ public class ServiceSimulation implements Runnable{
 				else
 				{
 					releaseLock(Boolean.TRUE , fileId);
-					//Thread.sleep(DynamicVoting.calculateExpBackOff());
+					if(currentTimer>DynamicVoting.maxBackOff)
+						currentTimer = DynamicVoting.minBackOff;
+					Thread.sleep(currentTimer);
+					currentTimer = currentTimer + currentTimer;
 				}
 
 				if(DynamicVoting.requestCompleted)
@@ -549,7 +553,7 @@ public class ServiceSimulation implements Runnable{
 
 		while(DynamicVoting.isWaitingForUpdate);
 		readOp(DynamicVoting.filePath+fileId);
-		
+
 		DynamicVoting.requestCompleted=true;
 		releaseLock(true, fileId);
 		System.out.println("Completed the read Operation");
@@ -559,6 +563,7 @@ public class ServiceSimulation implements Runnable{
 	public void write(String fileId)
 	{
 
+		int currentTimer = DynamicVoting.minBackOff;
 		while(true)
 		{
 			if(!DynamicVoting.isWriting && !checkLock(true, fileId) && !checkLock(false, fileId))
@@ -639,7 +644,10 @@ public class ServiceSimulation implements Runnable{
 				else
 				{
 					releaseLock(Boolean.FALSE , fileId);
-					//Thread.sleep(DynamicVoting.calculateExpBackOff());
+					if(currentTimer>DynamicVoting.maxBackOff)
+						currentTimer = DynamicVoting.minBackOff;
+					Thread.sleep(currentTimer);
+					currentTimer = currentTimer + currentTimer;
 				}
 
 				if(DynamicVoting.requestCompleted)
@@ -708,7 +716,7 @@ public class ServiceSimulation implements Runnable{
 				scanner.close();
 			}
 		}
-		
+
 		System.out.println("Read completed");
 
 	}
